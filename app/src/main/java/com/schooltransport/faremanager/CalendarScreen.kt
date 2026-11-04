@@ -67,7 +67,6 @@ fun CalendarScreen(store: TransportStore) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-
         Text(
             "Calendar & Attendance",
             style = MaterialTheme.typography.headlineSmall,
@@ -148,11 +147,20 @@ fun CalendarScreen(store: TransportStore) {
                     ) {
                         week.forEach { day ->
                             if (day == null) {
-                                Box(Modifier.weight(1f).height(44.dp))
+                                Box(
+                                    Modifier
+                                        .weight(1f)
+                                        .height(44.dp)
+                                )
                             } else {
                                 val dateCalendar = Calendar.getInstance().apply {
-                                    set(displayedYear, displayedMonth, day)
+                                    set(
+                                        displayedYear,
+                                        displayedMonth,
+                                        day
+                                    )
                                 }
+
                                 val dateKey = formatDate(dateCalendar)
                                 val isSelected = dateKey == selectedDate
                                 val isToday = dateKey == formatDate(today)
@@ -162,10 +170,11 @@ fun CalendarScreen(store: TransportStore) {
                                         .weight(1f)
                                         .height(44.dp)
                                         .background(
-                                            color = if (isSelected)
+                                            color = if (isSelected) {
                                                 MaterialTheme.colorScheme.primary
-                                            else
-                                                MaterialTheme.colorScheme.surfaceVariant,
+                                            } else {
+                                                MaterialTheme.colorScheme.surfaceVariant
+                                            },
                                             shape = RoundedCornerShape(10.dp)
                                         )
                                         .clickable {
@@ -175,19 +184,22 @@ fun CalendarScreen(store: TransportStore) {
                                 ) {
                                     Text(
                                         day.toString(),
-                                        color = if (isSelected)
+                                        color = if (isSelected) {
                                             MaterialTheme.colorScheme.onPrimary
-                                        else
-                                            MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = if (isToday || isSelected)
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
+                                        fontWeight = if (isToday || isSelected) {
                                             FontWeight.Bold
-                                        else
+                                        } else {
                                             FontWeight.Normal
+                                        }
                                     )
                                 }
                             }
                         }
                     }
+
                     Spacer(Modifier.height(5.dp))
                 }
             }
@@ -219,7 +231,7 @@ fun CalendarScreen(store: TransportStore) {
 
                     val existingTrip = store.trips.firstOrNull {
                         it.childId == child.id &&
-                        it.date == selectedDate
+                            it.date == selectedDate
                     }
 
                     var saving by remember(child.id, selectedDate) {
@@ -246,6 +258,15 @@ fun CalendarScreen(store: TransportStore) {
                                 fontWeight = FontWeight.Bold
                             )
 
+                            if (child.fromLocation.isNotBlank() ||
+                                child.toLocation.isNotBlank()
+                            ) {
+                                Text(
+                                    "${child.fromLocation} → ${child.toLocation}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+
                             Spacer(Modifier.height(10.dp))
 
                             Row(
@@ -254,53 +275,51 @@ fun CalendarScreen(store: TransportStore) {
                             ) {
                                 AttendanceButton(
                                     label = "Morning",
-                                    fare = child.morningFare,
+                                    fare = existingTrip?.morningFare
+                                        ?: child.morningFare,
                                     checked = existingTrip?.morningDone == true,
                                     enabled = !saving,
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    saving = true
+                                    val newMorning =
+                                        existingTrip?.morningDone != true
 
-                                    store.saveTrip(
-                                        TransportTrip(
-                                            id = existingTrip?.id ?: "",
-                                            childId = child.id,
-                                            childName = child.name,
-                                            date = selectedDate,
-                                            morningDone =
-                                                existingTrip?.morningDone != true,
-                                            returnDone =
-                                                existingTrip?.returnDone ?: false,
-                                            morningFare = child.morningFare,
-                                            returnFare = child.returnFare,
-                                            note = existingTrip?.note ?: ""
-                                        )
+                                    val newReturn =
+                                        existingTrip?.returnDone ?: false
+
+                                    saveAttendance(
+                                        store = store,
+                                        child = child,
+                                        existingTrip = existingTrip,
+                                        date = selectedDate,
+                                        morningDone = newMorning,
+                                        returnDone = newReturn,
+                                        onSaving = { saving = it }
                                     )
                                 }
 
                                 AttendanceButton(
                                     label = "Return",
-                                    fare = child.returnFare,
+                                    fare = existingTrip?.returnFare
+                                        ?: child.returnFare,
                                     checked = existingTrip?.returnDone == true,
                                     enabled = !saving,
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    saving = true
+                                    val newMorning =
+                                        existingTrip?.morningDone ?: false
 
-                                    store.saveTrip(
-                                        TransportTrip(
-                                            id = existingTrip?.id ?: "",
-                                            childId = child.id,
-                                            childName = child.name,
-                                            date = selectedDate,
-                                            morningDone =
-                                                existingTrip?.morningDone ?: false,
-                                            returnDone =
-                                                existingTrip?.returnDone != true,
-                                            morningFare = child.morningFare,
-                                            returnFare = child.returnFare,
-                                            note = existingTrip?.note ?: ""
-                                        )
+                                    val newReturn =
+                                        existingTrip?.returnDone != true
+
+                                    saveAttendance(
+                                        store = store,
+                                        child = child,
+                                        existingTrip = existingTrip,
+                                        date = selectedDate,
+                                        morningDone = newMorning,
+                                        returnDone = newReturn,
+                                        onSaving = { saving = it }
                                     )
                                 }
                             }
@@ -318,7 +337,58 @@ fun CalendarScreen(store: TransportStore) {
                 }
             }
         }
+
+        store.errorMessage?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
     }
+}
+
+private fun saveAttendance(
+    store: TransportStore,
+    child: TransportChild,
+    existingTrip: TransportTrip?,
+    date: String,
+    morningDone: Boolean,
+    returnDone: Boolean,
+    onSaving: (Boolean) -> Unit
+) {
+    onSaving(true)
+
+    if (!morningDone && !returnDone) {
+        if (existingTrip != null) {
+            store.deleteTrip(existingTrip.id)
+        } else {
+            onSaving(false)
+        }
+        return
+    }
+
+    val trip = TransportTrip(
+        id = existingTrip?.id ?: "",
+        childId = child.id,
+        childName = child.name,
+        date = date,
+        time = existingTrip?.time ?: "",
+        fromLocation = existingTrip?.fromLocation
+            ?: child.fromLocation,
+        toLocation = existingTrip?.toLocation
+            ?: child.toLocation,
+        morningDone = morningDone,
+        returnDone = returnDone,
+        morningFare = existingTrip?.morningFare
+            ?: child.morningFare,
+        returnFare = existingTrip?.returnFare
+            ?: child.returnFare,
+        note = existingTrip?.note ?: "",
+        createdAt = existingTrip?.createdAt
+            ?: System.currentTimeMillis()
+    )
+
+    store.saveTrip(trip)
 }
 
 @Composable
@@ -335,14 +405,16 @@ private fun AttendanceButton(
         enabled = enabled,
         modifier = modifier,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (checked)
+            containerColor = if (checked) {
                 MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = if (checked)
+            } else {
+                MaterialTheme.colorScheme.secondaryContainer
+            },
+            contentColor = if (checked) {
                 MaterialTheme.colorScheme.onPrimary
-            else
+            } else {
                 MaterialTheme.colorScheme.onSecondaryContainer
+            }
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
