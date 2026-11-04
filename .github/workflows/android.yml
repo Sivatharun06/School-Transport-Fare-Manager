@@ -1,4 +1,3 @@
-
 name: Build School Transport Fare Manager
 
 on:
@@ -57,12 +56,11 @@ jobs:
         run: |
           python3 -c "import xml.etree.ElementTree as ET; ET.parse('app/src/main/AndroidManifest.xml'); print('Manifest XML is valid')"
 
-      - name: Check App Icon
+      - name: Inspect repository files
         run: |
-          echo "Checking drawable folder:"
-          find app/src/main/res -maxdepth 3 -type f
-          echo "Checking icon:"
-          ls -l app/src/main/res/drawable/ic_launcher.png
+          pwd
+          git ls-files | grep -i 'ic_launcher\|AndroidManifest.xml'
+          ls -la app/src/main
     
       - name: Build Debug APK
         run: gradle assembleDebug
