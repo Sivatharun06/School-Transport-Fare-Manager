@@ -2,6 +2,8 @@
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,20 +41,18 @@ fun FarePlansScreen(store: TransportStore) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(Modifier.weight(1f)) {
                 Text(
                     "Payment Configurations",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    "${store.farePlans.size} payment methods",
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text("${store.farePlans.size} payment methods")
             }
 
             Button(
                 onClick = {
+                    store.clearMessages()
                     editingPlan = null
                     showDialog = true
                 }
@@ -66,29 +66,36 @@ fun FarePlansScreen(store: TransportStore) {
         Spacer(Modifier.height(12.dp))
 
         store.errorMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error
+            )
         }
 
         store.successMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.primary)
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
         if (store.isLoading && store.farePlans.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
         } else if (store.farePlans.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No payment methods yet. Add your first method.")
+                Text("No payment configurations yet. Add your first one.")
             }
         } else {
             LazyColumn(
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
@@ -106,19 +113,19 @@ fun FarePlansScreen(store: TransportStore) {
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(14.dp)
+                            Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
+                                Column(Modifier.weight(1f)) {
                                     Text(
                                         plan.name,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
+
                                     Text(
                                         "$assignedCount children assigned",
                                         style = MaterialTheme.typography.bodySmall
@@ -127,6 +134,7 @@ fun FarePlansScreen(store: TransportStore) {
 
                                 IconButton(
                                     onClick = {
+                                        store.clearMessages()
                                         editingPlan = plan
                                         showDialog = true
                                     }
@@ -139,6 +147,7 @@ fun FarePlansScreen(store: TransportStore) {
 
                                 IconButton(
                                     onClick = {
+                                        store.clearMessages()
                                         deletingPlan = plan
                                     }
                                 ) {
@@ -152,10 +161,8 @@ fun FarePlansScreen(store: TransportStore) {
 
                             HorizontalDivider()
 
-                            Spacer(Modifier.height(8.dp))
-
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Morning Trip")
@@ -166,7 +173,7 @@ fun FarePlansScreen(store: TransportStore) {
                             }
 
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Return Trip")
@@ -204,20 +211,37 @@ fun FarePlansScreen(store: TransportStore) {
     }
 
     deletingPlan?.let { plan ->
+
+        val assignedCount = store.children.count {
+            it.farePlanId == plan.id
+        }
+
         AlertDialog(
-            onDismissRequest = { deletingPlan = null },
-            title = { Text("Delete Payment Method?") },
+            onDismissRequest = {
+                deletingPlan = null
+            },
+            title = {
+                Text("Delete Payment Configuration?")
+            },
             text = {
-                Text(
-                    "Delete '${plan.name}'? Plans assigned to children cannot be deleted."
-                )
+                if (assignedCount > 0) {
+                    Text(
+                        "This configuration is assigned to $assignedCount children. " +
+                            "Change their payment configuration before deleting this plan."
+                    )
+                } else {
+                    Text("Delete '${plan.name}'? This action cannot be undone.")
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        store.deleteFarePlan(plan.id)
+                        if (assignedCount == 0) {
+                            store.deleteFarePlan(plan.id)
+                        }
                         deletingPlan = null
-                    }
+                    },
+                    enabled = assignedCount == 0
                 ) {
                     Text("Delete")
                 }
@@ -233,6 +257,7 @@ fun FarePlansScreen(store: TransportStore) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FarePlanDialog(
     existingPlan: FarePlan?,
@@ -259,19 +284,27 @@ private fun FarePlanDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                if (existingPlan == null)
-                    "Add Payment Method"
-                else
-                    "Edit Payment Method"
+                if (existingPlan == null) {
+                    "Add Payment Configuration"
+                } else {
+                    "Edit Payment Configuration"
+                }
             )
         },
         text = {
             Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 430.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                        error = ""
+                    },
                     label = { Text("Payment Method Name") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -279,7 +312,12 @@ private fun FarePlanDialog(
 
                 OutlinedTextField(
                     value = morningFare,
-                    onValueChange = { morningFare = it },
+                    onValueChange = {
+                        morningFare = it.filter { char ->
+                            char.isDigit() || char == '.'
+                        }
+                        error = ""
+                    },
                     label = { Text("Morning Trip Amount (Rs.)") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
@@ -290,7 +328,12 @@ private fun FarePlanDialog(
 
                 OutlinedTextField(
                     value = returnFare,
-                    onValueChange = { returnFare = it },
+                    onValueChange = {
+                        returnFare = it.filter { char ->
+                            char.isDigit() || char == '.'
+                        }
+                        error = ""
+                    },
                     label = { Text("Return Trip Amount (Rs.)") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
@@ -318,7 +361,7 @@ private fun FarePlanDialog(
                             error = "Enter a payment method name"
 
                         morning == null || returning == null ->
-                            error = "Enter valid amounts"
+                            error = "Enter valid fare amounts"
 
                         morning < 0 || returning < 0 ->
                             error = "Amounts cannot be negative"
