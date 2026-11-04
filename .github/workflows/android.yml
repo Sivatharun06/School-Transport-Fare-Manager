@@ -45,7 +45,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
+      - name: Verify Firebase configuration
+        run: |
+          echo "Checking app folder..."
+          ls -la app
+          echo "Checking tracked file..."
+          git ls-files app/google-services.json
+          test -f app/google-services.json
+   
       - name: Build Debug APK
         run: gradle assembleDebug
 
