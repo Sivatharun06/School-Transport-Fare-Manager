@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -38,20 +37,14 @@ private val Gold = Color(0xFFFFC857)
 
 @Composable
 fun SchoolTransportApp() {
-
-    var showLogin by remember {
-        mutableStateOf(false)
-    }
-
+    var showLogin by remember { mutableStateOf(false) }
     var isAuthenticated by remember {
-        mutableStateOf(
-            FirebaseAuth.getInstance().currentUser != null
-        )
+        mutableStateOf(FirebaseAuth.getInstance().currentUser != null)
     }
 
     when {
         isAuthenticated -> {
-            SuccessScreen(
+            DashboardScreen(
                 onLogout = {
                     FirebaseAuth.getInstance().signOut()
                     isAuthenticated = false
@@ -69,19 +62,15 @@ fun SchoolTransportApp() {
         }
 
         else -> {
-            SplashScreen(
-                onGetStarted = {
-                    showLogin = true
-                }
-            )
+            SplashScreen {
+                showLogin = true
+            }
         }
     }
 }
 
 @Composable
-private fun SplashScreen(
-    onGetStarted: () -> Unit
-) {
+private fun SplashScreen(onGetStarted: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -97,7 +86,6 @@ private fun SplashScreen(
             modifier = Modifier.padding(24.dp)
         ) {
             Text("🚌", fontSize = 76.sp)
-
             Spacer(Modifier.height(20.dp))
 
             Text(
@@ -112,15 +100,6 @@ private fun SplashScreen(
                 color = Gold,
                 fontSize = 27.sp,
                 fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(14.dp))
-
-            Box(
-                Modifier
-                    .width(75.dp)
-                    .height(4.dp)
-                    .background(Gold, RoundedCornerShape(10.dp))
             )
 
             Spacer(Modifier.height(18.dp))
@@ -141,10 +120,7 @@ private fun SplashScreen(
                     contentColor = DeepPurple
                 )
             ) {
-                Text(
-                    "Get Started",
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Get Started", fontWeight = FontWeight.Bold)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -154,52 +130,6 @@ private fun SplashScreen(
                 color = Gold,
                 fontSize = 12.sp
             )
-        }
-    }
-}
-
-@Composable
-private fun SuccessScreen(
-    onLogout: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(DeepPurple, Purple, DeepPurple)
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(24.dp)
-        ) {
-            Text("🎉", fontSize = 64.sp)
-
-            Spacer(Modifier.height(20.dp))
-
-            Text(
-                "Login Successful!",
-                color = Gold,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            Text(
-                "Welcome to School Transport Fare Manager",
-                color = Color.White,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(onClick = onLogout) {
-                Text("Logout")
-            }
         }
     }
 }
