@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ChildrenScreen(store: TransportStore) {
