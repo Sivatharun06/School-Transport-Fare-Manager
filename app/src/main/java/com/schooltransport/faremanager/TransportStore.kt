@@ -1,3 +1,4 @@
+
 package com.schooltransport.faremanager
 
 import androidx.compose.runtime.getValue
@@ -12,15 +13,14 @@ data class MonthlySummary(
     val totalFare: Double = 0.0,
     val paidAmount: Double = 0.0,
     val balance: Double = 0.0,
-    val tripCount: Int = 0
+    val tripCount: Int = 0,
+    val overpaidAmount: Double = 0.0
 )
 
 class TransportStore {
 
     private val repository = TransportRepository()
-
-    private val scope =
-        CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     var children by mutableStateOf<List<TransportChild>>(emptyList())
         private set
@@ -39,8 +39,6 @@ class TransportStore {
 
     var successMessage by mutableStateOf<String?>(null)
         private set
-
-    // LOAD ALL DATA
 
     fun loadAll() {
         scope.launch {
@@ -62,13 +60,14 @@ class TransportStore {
             .sortedBy { it.name.lowercase() }
 
         trips = repository.getTrips()
-            .sortedByDescending { it.date }
+            .sortedWith(
+                compareByDescending<TransportTrip> { it.date }
+                    .thenByDescending { it.time }
+            )
 
         payments = repository.getPayments()
             .sortedByDescending { it.paymentDate }
     }
-
-    // COMMON OPERATION HANDLER
 
     private fun execute(
         operation: suspend () -> Unit,
@@ -94,16 +93,21 @@ class TransportStore {
     // CHILDREN
 
     fun saveChild(child: TransportChild) {
+        if (child.name.isBlank()) {
+            errorMessage = "Child name is required"
+            return
+        }
+
         execute(
-            operation = { repository.saveChild(child) },
-            message = "Child saved successfully"
+            { repository.saveChild(child) },
+            "Child saved successfully"
         )
     }
 
     fun deleteChild(id: String) {
         execute(
-            operation = { repository.deleteChild(id) },
-            message = "Child deleted successfully"
+            { repository.deleteChild(id) },
+            "Child deleted successfully"
         )
     }
 
@@ -111,19 +115,39 @@ class TransportStore {
         return children.find { it.id == id }
     }
 
-    // TRIPS / ATTENDANCE
+    // TRIPS
 
     fun saveTrip(trip: TransportTrip) {
+        if (trip.childId.isBlank()) {
+            errorMessage = "Please select a child"
+            return
+        }
+
+        if (trip.date.isBlank()) {
+            errorMessage = "Trip date is required"
+            return
+        }
+
+        if (!trip.morningDone && !trip.returnDone) {
+            errorMessage = "Select at least one completed trip"
+            return
+        }
+
+        if (trip.morningFare < 0 || trip.returnFare < 0) {
+            errorMessage = "Fare cannot be negative"
+            return
+        }
+
         execute(
-            operation = { repository.saveTrip(trip) },
-            message = "Attendance saved successfully"
+            { repository.saveTrip(trip) },
+            "Trip saved successfully"
         )
     }
 
     fun deleteTrip(id: String) {
         execute(
-            operation = { repository.deleteTrip(id) },
-            message = "Trip deleted successfully"
+            { repository.deleteTrip(id) },
+            "Trip deleted successfully"
         )
     }
 
@@ -137,13 +161,28 @@ class TransportStore {
     ): List<TransportTrip> {
         return trips.filter {
             it.childId == childId &&
-            it.date.startsWith("$monthKey-")
+                it.date.startsWith("$monthKey-")
         }
     }
 
     // PAYMENTS
 
     fun savePayment(payment: TransportPayment) {
+        if (payment.childId.isBlank()) {
+            errorMessage = "Please select a child"
+            return
+        }
+
+        if (payment.amount <= 0) {
+            errorMessage = "Payment amount must be greater than zero"
+            return
+        }
+
+        if (payment.paymentDate.isBlank()) {
+            errorMessage = "Payment date is required"
+            return
+        }
+
         val normalizedPayment = payment.copy(
             monthKey = payment.monthKey.ifBlank {
                 payment.paymentDate.take(7)
@@ -151,24 +190,21 @@ class TransportStore {
         )
 
         execute(
-            operation = {
-                repository.savePayment(normalizedPayment)
-            },
-            message = "Payment saved successfully"
+            { repository.savePayment(normalizedPayment) },
+            "Payment saved successfully"
         )
     }
 
     fun deletePayment(id: String) {
         execute(
-            operation = { repository.deletePayment(id) },
-            message = "Payment deleted successfully"
+            { repository.deletePayment(id) },
+            "Payment deleted successfully"
         )
     }
 
-    // MONTHLY CALCULATIONS
+    // MONTHLY SUMMARY
 
     fun monthlySummary(monthKey: String): MonthlySummary {
-
         val monthTrips = trips.filter {
             it.date.startsWith("$monthKey-")
         }
@@ -177,18 +213,9 @@ class TransportStore {
             it.monthKey == monthKey
         }
 
-        val totalFare = monthTrips.sumOf {
-            it.totalFare
-        }
-
-        val paidAmount = monthPayments.sumOf {
-            it.amount
-        }
-
-        return MonthlySummary(
-            totalFare = totalFare,
-            paidAmount = paidAmount,
-            balance = totalFare - paidAmount,
+        return createSummary(
+            totalFare = monthTrips.sumOf { it.totalFare },
+            paidAmount = monthPayments.sumOf { it.amount },
             tripCount = monthTrips.size
         )
     }
@@ -197,31 +224,36 @@ class TransportStore {
         childId: String,
         monthKey: String
     ): MonthlySummary {
-
         val childTrips = tripsForChild(childId, monthKey)
 
         val childPayments = payments.filter {
             it.childId == childId &&
-            it.monthKey == monthKey
+                it.monthKey == monthKey
         }
 
-        val totalFare = childTrips.sumOf {
-            it.totalFare
-        }
-
-        val paidAmount = childPayments.sumOf {
-            it.amount
-        }
-
-        return MonthlySummary(
-            totalFare = totalFare,
-            paidAmount = paidAmount,
-            balance = totalFare - paidAmount,
+        return createSummary(
+            totalFare = childTrips.sumOf { it.totalFare },
+            paidAmount = childPayments.sumOf { it.amount },
             tripCount = childTrips.size
         )
     }
 
-    // MESSAGE MANAGEMENT
+    private fun createSummary(
+        totalFare: Double,
+        paidAmount: Double,
+        tripCount: Int
+    ): MonthlySummary {
+        val balance = (totalFare - paidAmount).coerceAtLeast(0.0)
+        val overpaid = (paidAmount - totalFare).coerceAtLeast(0.0)
+
+        return MonthlySummary(
+            totalFare = totalFare,
+            paidAmount = paidAmount,
+            balance = balance,
+            tripCount = tripCount,
+            overpaidAmount = overpaid
+        )
+    }
 
     fun clearMessages() {
         errorMessage = null
