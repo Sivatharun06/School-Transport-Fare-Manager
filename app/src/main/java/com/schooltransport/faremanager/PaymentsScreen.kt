@@ -1,12 +1,13 @@
 
 package com.schooltransport.faremanager
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -38,6 +39,10 @@ fun PaymentsScreen(store: TransportStore) {
         mutableStateOf(false)
     }
 
+    var paymentToDelete by remember {
+        mutableStateOf<TransportPayment?>(null)
+    }
+
     val monthKey = remember(month, year) {
         String.format(Locale.US, "%04d-%02d", year, month + 1)
     }
@@ -57,9 +62,9 @@ fun PaymentsScreen(store: TransportStore) {
 
     val summary = store.monthlySummary(monthKey)
 
-    val monthlyPayments = store.payments.filter {
-        it.monthKey == monthKey
-    }
+    val monthlyPayments = store.payments
+        .filter { it.monthKey == monthKey }
+        .sortedByDescending { it.paymentDate }
 
     Column(
         modifier = Modifier
@@ -134,15 +139,8 @@ fun PaymentsScreen(store: TransportStore) {
                     fontWeight = FontWeight.Bold
                 )
 
-                PaymentSummaryRow(
-                    "Total Fare",
-                    summary.totalFare
-                )
-
-                PaymentSummaryRow(
-                    "Paid Amount",
-                    summary.paidAmount
-                )
+                PaymentSummaryRow("Total Fare", summary.totalFare)
+                PaymentSummaryRow("Paid Amount", summary.paidAmount)
 
                 HorizontalDivider()
 
@@ -152,6 +150,14 @@ fun PaymentsScreen(store: TransportStore) {
                     bold = true
                 )
 
+                if (summary.overpaid > 0) {
+                    PaymentSummaryRow(
+                        "Overpaid",
+                        summary.overpaid,
+                        bold = true
+                    )
+                }
+
                 Text(
                     "${summary.tripCount} attendance records",
                     style = MaterialTheme.typography.labelMedium
@@ -160,6 +166,74 @@ fun PaymentsScreen(store: TransportStore) {
         }
 
         Spacer(Modifier.height(14.dp))
+
+        // CHILD-WISE MONTHLY SUMMARY
+
+        Text(
+            "Child-wise Summary",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        if (store.children.isEmpty()) {
+            Text("No children registered.")
+        } else {
+            store.children.forEach { child ->
+
+                val childSummary = store.childMonthlySummary(
+                    child.id,
+                    monthKey
+                )
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(
+                            child.name,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+
+                        PaymentSummaryRow(
+                            "Total Fare",
+                            childSummary.totalFare
+                        )
+
+                        PaymentSummaryRow(
+                            "Paid",
+                            childSummary.paidAmount
+                        )
+
+                        PaymentSummaryRow(
+                            "Balance",
+                            childSummary.balance,
+                            bold = true
+                        )
+
+                        if (childSummary.overpaid > 0) {
+                            PaymentSummaryRow(
+                                "Overpaid",
+                                childSummary.overpaid,
+                                bold = true
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // PAYMENT HISTORY
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -178,7 +252,10 @@ fun PaymentsScreen(store: TransportStore) {
                 },
                 enabled = store.children.isNotEmpty()
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null
+                )
                 Spacer(Modifier.width(4.dp))
                 Text("Add Payment")
             }
@@ -193,6 +270,13 @@ fun PaymentsScreen(store: TransportStore) {
             )
         }
 
+        store.successMessage?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
         if (store.isLoading && store.payments.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -201,12 +285,7 @@ fun PaymentsScreen(store: TransportStore) {
                 CircularProgressIndicator()
             }
         } else if (monthlyPayments.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No payments recorded for this month.")
-            }
+            Text("No payments recorded for this month.")
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -237,7 +316,7 @@ fun PaymentsScreen(store: TransportStore) {
                                 )
 
                                 Text(
-                                    payment.paymentDate,
+                                    "Date: ${payment.paymentDate}",
                                     style = MaterialTheme.typography.bodySmall
                                 )
 
@@ -249,7 +328,7 @@ fun PaymentsScreen(store: TransportStore) {
                                 }
 
                                 Text(
-                                    "Rs. ${payment.amount}",
+                                    "Rs. ${"%.2f".format(Locale.US, payment.amount)}",
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -257,7 +336,7 @@ fun PaymentsScreen(store: TransportStore) {
 
                             IconButton(
                                 onClick = {
-                                    store.deletePayment(payment.id)
+                                    paymentToDelete = payment
                                 }
                             ) {
                                 Icon(
@@ -286,6 +365,44 @@ fun PaymentsScreen(store: TransportStore) {
             }
         )
     }
+
+    paymentToDelete?.let { payment ->
+        AlertDialog(
+            onDismissRequest = {
+                paymentToDelete = null
+            },
+            title = {
+                Text("Delete Payment?")
+            },
+            text = {
+                Text(
+                    "Delete Rs. ${payment.amount} payment from ${payment.childName}?"
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        store.deletePayment(payment.id)
+                        paymentToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        paymentToDelete = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -300,12 +417,20 @@ private fun PaymentSummaryRow(
     ) {
         Text(
             label,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (bold) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Normal
+            }
         )
 
         Text(
             "Rs. ${"%.2f".format(Locale.US, amount)}",
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium
+            fontWeight = if (bold) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Medium
+            }
         )
     }
 }
@@ -317,6 +442,7 @@ private fun AddPaymentDialog(
     onDismiss: () -> Unit,
     onSave: (TransportPayment) -> Unit
 ) {
+
     var selectedChild by remember {
         mutableStateOf<TransportChild?>(null)
     }
@@ -325,11 +451,24 @@ private fun AddPaymentDialog(
         mutableStateOf("")
     }
 
-    var paymentDate by remember {
-        mutableStateOf(
-            SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                .format(Calendar.getInstance().time)
-        )
+    val initialDate = remember(defaultMonth) {
+        val currentMonth = SimpleDateFormat(
+            "yyyy-MM",
+            Locale.US
+        ).format(Calendar.getInstance().time)
+
+        if (defaultMonth == currentMonth) {
+            SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.US
+            ).format(Calendar.getInstance().time)
+        } else {
+            "$defaultMonth-01"
+        }
+    }
+
+    var paymentDate by remember(defaultMonth) {
+        mutableStateOf(initialDate)
     }
 
     var note by remember {
@@ -351,8 +490,13 @@ private fun AddPaymentDialog(
         },
         text = {
             Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 420.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+
                 OutlinedButton(
                     onClick = {
                         showChildren = true
@@ -378,7 +522,9 @@ private fun AddPaymentDialog(
                 OutlinedTextField(
                     value = paymentDate,
                     onValueChange = { paymentDate = it },
-                    label = { Text("Payment Date (YYYY-MM-DD)") },
+                    label = {
+                        Text("Payment Date (YYYY-MM-DD)")
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -403,28 +549,32 @@ private fun AddPaymentDialog(
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull()
 
-                    if (selectedChild == null) {
-                        error = "Select a child"
-                    } else if (parsedAmount == null || parsedAmount <= 0) {
-                        error = "Enter a valid payment amount"
-                    } else if (!paymentDate.matches(
-                            Regex("\\d{4}-\\d{2}-\\d{2}")
-                        )
-                    ) {
-                        error = "Use date format YYYY-MM-DD"
-                    } else {
-                        val child = selectedChild!!
+                    when {
+                        selectedChild == null ->
+                            error = "Select a child"
 
-                        onSave(
-                            TransportPayment(
-                                childId = child.id,
-                                childName = child.name,
-                                amount = parsedAmount,
-                                paymentDate = paymentDate,
-                                monthKey = paymentDate.take(7),
-                                note = note.trim()
+                        parsedAmount == null ||
+                            !parsedAmount.isFinite() ||
+                            parsedAmount <= 0 ->
+                            error = "Enter a valid payment amount"
+
+                        !isValidPaymentDate(paymentDate) ->
+                            error = "Enter a valid date (YYYY-MM-DD)"
+
+                        else -> {
+                            val child = selectedChild!!
+
+                            onSave(
+                                TransportPayment(
+                                    childId = child.id,
+                                    childName = child.name,
+                                    amount = parsedAmount,
+                                    paymentDate = paymentDate,
+                                    monthKey = paymentDate.take(7),
+                                    note = note.trim()
+                                )
                             )
-                        )
+                        }
                     }
                 }
             ) {
@@ -447,7 +597,11 @@ private fun AddPaymentDialog(
                 Text("Select Child")
             },
             text = {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 300.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     children.forEach { child ->
                         TextButton(
                             onClick = {
@@ -471,5 +625,19 @@ private fun AddPaymentDialog(
                 }
             }
         )
+    }
+}
+
+private fun isValidPaymentDate(value: String): Boolean {
+    if (!value.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$"))) {
+        return false
+    }
+
+    return try {
+        val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        format.isLenient = false
+        format.parse(value) != null
+    } catch (_: Exception) {
+        false
     }
 }
