@@ -2,31 +2,22 @@
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
-import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ChildrenScreen(store: TransportStore) {
-
     var showDialog by remember { mutableStateOf(false) }
-    var editingChild by remember {
-        mutableStateOf<TransportChild?>(null)
-    }
+    var editingChild by remember { mutableStateOf<TransportChild?>(null) }
+    var deleteChild by remember { mutableStateOf<TransportChild?>(null) }
 
     LaunchedEffect(Unit) {
         store.loadAll()
@@ -35,310 +26,316 @@ fun ChildrenScreen(store: TransportStore) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                Text(
-                    "Children",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "${store.children.size} children registered",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            FilledTonalButton(
-                onClick = {
-                    editingChild = null
-                    showDialog = true
-                }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+            Text("Children", style = MaterialTheme.typography.headlineSmall)
+            Button(onClick = {
+                editingChild = null
+                showDialog = true
+            }) {
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(4.dp))
-                Text("Add")
+                Text("Add Child")
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Text(
+            "Registered children: ${store.children.size}",
+            style = MaterialTheme.typography.bodyMedium
+        )
 
-        store.errorMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+        if (store.children.isEmpty()) {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(20.dp)) {
+                    Text("No children added yet.")
+                    Spacer(Modifier.height(6.dp))
+                    Text("Add a child to start managing transport fares.")
+                }
+            }
         }
 
-        store.successMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.primary)
-        }
-
-        if (store.isLoading && store.children.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (store.children.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No children added yet.\nTap Add to register a child.")
-            }
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
-            ) {
-                items(
-                    items = store.children,
-                    key = { it.id }
-                ) { child ->
-
-                    Card(
+        store.children.sortedBy { it.name.lowercase() }.forEach { child ->
+            Card(Modifier.fillMaxWidth()) {
+                Column(
+                    Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        child.name,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        "Parent: ${child.parentName}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-
-                                IconButton(
-                                    onClick = {
-                                        editingChild = child
-                                        showDialog = true
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = "Edit child"
-                                    )
-                                }
-
-                                IconButton(
-                                    onClick = {
-                                        store.deleteChild(child.id)
-                                    }
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Delete child",
-                                        tint = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-
-                            Text("Phone: ${child.phone}")
-                            Text("Route: ${child.fromLocation} → ${child.toLocation}")
+                        Column(Modifier.weight(1f)) {
                             Text(
-                                "Morning: Rs. ${child.morningFare.toInt()}  |  Return: Rs. ${child.returnFare.toInt()}",
-                                fontWeight = FontWeight.Medium
+                                child.name,
+                                style = MaterialTheme.typography.titleMedium
                             )
+                            Text("Age: ${child.age}")
+                        }
+
+                        Row {
+                            IconButton(onClick = {
+                                editingChild = child
+                                showDialog = true
+                            }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                            }
+                            IconButton(onClick = {
+                                deleteChild = child
+                            }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                            }
                         }
                     }
+
+                    if (child.fromLocation.isNotBlank() ||
+                        child.toLocation.isNotBlank()
+                    ) {
+                        Text(
+                            "Route: ${child.fromLocation.ifBlank { "Not set" }} → " +
+                                child.toLocation.ifBlank { "Not set" }
+                        )
+                    }
+
+                    Text(
+                        "Payment Configuration: " +
+                            child.farePlanName.ifBlank { "Not assigned" }
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Morning: Rs. ${child.morningFare}")
+                        Text("Return: Rs. ${child.returnFare}")
+                    }
+
+                    Text(
+                        if (child.isActive) "Active" else "Inactive",
+                        color = if (child.isActive) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
+                    )
                 }
             }
         }
     }
 
     if (showDialog) {
-        ChildFormDialog(
-            existingChild = editingChild,
-            onDismiss = {
-                showDialog = false
-                editingChild = null
-            },
+        ChildDialog(
+            store = store,
+            child = editingChild,
+            onDismiss = { showDialog = false },
             onSave = { child ->
                 store.saveChild(child)
                 showDialog = false
-                editingChild = null
+            }
+        )
+    }
+
+    deleteChild?.let { child ->
+        AlertDialog(
+            onDismissRequest = { deleteChild = null },
+            title = { Text("Delete Child?") },
+            text = { Text("Delete ${child.name}? Existing trip and payment history will remain.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    store.deleteChild(child.id)
+                    deleteChild = null
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteChild = null }) {
+                    Text("Cancel")
+                }
             }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChildFormDialog(
-    existingChild: TransportChild?,
+private fun ChildDialog(
+    store: TransportStore,
+    child: TransportChild?,
     onDismiss: () -> Unit,
     onSave: (TransportChild) -> Unit
 ) {
-    var name by remember(existingChild) {
-        mutableStateOf(existingChild?.name ?: "")
+    var name by remember(child?.id) { mutableStateOf(child?.name ?: "") }
+    var age by remember(child?.id) {
+        mutableStateOf(if (child == null) "" else child.age.toString())
     }
-    var parentName by remember(existingChild) {
-        mutableStateOf(existingChild?.parentName ?: "")
+    var fromLocation by remember(child?.id) {
+        mutableStateOf(child?.fromLocation ?: "")
     }
-    var phone by remember(existingChild) {
-        mutableStateOf(existingChild?.phone ?: "")
-    }
-    var fromLocation by remember(existingChild) {
-        mutableStateOf(existingChild?.fromLocation ?: "")
-    }
-    var toLocation by remember(existingChild) {
-        mutableStateOf(existingChild?.toLocation ?: "")
-    }
-    var morningFare by remember(existingChild) {
-        mutableStateOf(existingChild?.morningFare?.toString() ?: "400")
-    }
-    var returnFare by remember(existingChild) {
-        mutableStateOf(existingChild?.returnFare?.toString() ?: "400")
+    var toLocation by remember(child?.id) {
+        mutableStateOf(child?.toLocation ?: "")
     }
 
-    var validationError by remember {
-        mutableStateOf("")
+    var selectedPlanId by remember(child?.id) {
+        mutableStateOf(child?.farePlanId ?: "")
+    }
+
+    var expanded by remember { mutableStateOf(false) }
+
+    val selectedPlan = store.farePlans.firstOrNull {
+        it.id == selectedPlanId
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (existingChild == null) "Add Child" else "Edit Child")
+            Text(if (child == null) "Add Child" else "Edit Child")
         },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 480.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                androidx.compose.foundation.rememberScrollState().let { scrollState ->
-                    Column(
-                        modifier = Modifier.verticalScroll(scrollState),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Child Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = age,
+                    onValueChange = { value ->
+                        age = value.filter { it.isDigit() }.take(2)
+                    },
+                    label = { Text("Age") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = fromLocation,
+                    onValueChange = { fromLocation = it },
+                    label = { Text("From Place (Optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = toLocation,
+                    onValueChange = { toLocation = it },
+                    label = { Text("To Place (Optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Text(
+                    "Payment Configuration",
+                    style = MaterialTheme.typography.titleSmall
+                )
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedPlan?.name
+                            ?: if (selectedPlanId.isBlank()) {
+                                "Select Payment Configuration"
+                            } else {
+                                "Previously assigned plan"
+                            },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Fare Plan") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                expanded = expanded
+                            )
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
                     ) {
-                        OutlinedTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            label = { Text("Child name *") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = parentName,
-                            onValueChange = { parentName = it },
-                            label = { Text("Parent name") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = phone,
-                            onValueChange = { phone = it },
-                            label = { Text("Phone number") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Phone
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = fromLocation,
-                            onValueChange = { fromLocation = it },
-                            label = { Text("Pickup location") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = toLocation,
-                            onValueChange = { toLocation = it },
-                            label = { Text("School / Destination") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = morningFare,
-                            onValueChange = { morningFare = it },
-                            label = { Text("Morning fare (Rs.)") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Decimal
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        OutlinedTextField(
-                            value = returnFare,
-                            onValueChange = { returnFare = it },
-                            label = { Text("Return fare (Rs.)") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Decimal
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        store.farePlans.forEach { plan ->
+                            DropdownMenuItem(
+                                text = { Text(plan.name) },
+                                onClick = {
+                                    selectedPlanId = plan.id
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
 
-                if (validationError.isNotBlank()) {
+                if (store.farePlans.isEmpty()) {
                     Text(
-                        validationError,
-                        color = MaterialTheme.colorScheme.error
+                        "No configurations available. Create one from Payment Configurations in Home or Settings.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+
+                selectedPlan?.let { plan ->
+                    Card(Modifier.fillMaxWidth()) {
+                        Column(
+                            Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text("Selected fares")
+                            Text("Morning: Rs. ${plan.morningFare}")
+                            Text("Return: Rs. ${plan.returnFare}")
+                        }
+                    }
+                }
+
+                if (child != null && selectedPlanId.isBlank()) {
+                    Text(
+                        "No new plan selected. Existing fare values will be kept.",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
         },
         confirmButton = {
             Button(
+                enabled = name.isNotBlank() &&
+                    age.toIntOrNull() != null &&
+                    (selectedPlan != null || child != null),
                 onClick = {
-                    val morning = morningFare.toDoubleOrNull()
-                    val returning = returnFare.toDoubleOrNull()
-
-                    if (name.isBlank()) {
-                        validationError = "Enter the child's name"
-                    } else if (morning == null || returning == null ||
-                        morning < 0 || returning < 0
-                    ) {
-                        validationError = "Enter valid fare amounts"
-                    } else {
-                        onSave(
-                            TransportChild(
-                                id = existingChild?.id ?: "",
-                                name = name.trim(),
-                                parentName = parentName.trim(),
-                                phone = phone.trim(),
-                                fromLocation = fromLocation.trim(),
-                                toLocation = toLocation.trim(),
-                                morningFare = morning,
-                                returnFare = returning,
-                                isActive = existingChild?.isActive ?: true,
-                                createdAt = existingChild?.createdAt
-                                    ?: System.currentTimeMillis()
-                            )
-                        )
-                    }
+                    val updatedChild = (child ?: TransportChild()).copy(
+                        name = name.trim(),
+                        age = age.toInt(),
+                        fromLocation = fromLocation.trim(),
+                        toLocation = toLocation.trim(),
+                        farePlanId = selectedPlan?.id
+                            ?: child?.farePlanId.orEmpty(),
+                        farePlanName = selectedPlan?.name
+                            ?: child?.farePlanName.orEmpty(),
+                        morningFare = selectedPlan?.morningFare
+                            ?: child?.morningFare ?: 400.0,
+                        returnFare = selectedPlan?.returnFare
+                            ?: child?.returnFare ?: 400.0
+                    )
+                    onSave(updatedChild)
                 }
             ) {
-                Text("Save")
+                Text("Save Child")
             }
         },
         dismissButton = {
