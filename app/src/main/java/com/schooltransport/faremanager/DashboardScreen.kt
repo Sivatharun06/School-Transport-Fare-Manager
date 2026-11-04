@@ -3,339 +3,129 @@ package com.schooltransport.faremanager
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
-private val DashPurple = Color(0xFF51247A)
-private val DashDark = Color(0xFF241044)
-private val DashGold = Color(0xFFFFC857)
-private val DashBg = Color(0xFFF7F3FC)
+private val DashboardPurple = Color(0xFF241044)
+private val DashboardGold = Color(0xFFFFC857)
+
+private data class DashboardTab(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
 
 @Composable
 fun DashboardScreen(onLogout: () -> Unit) {
+
+    val store = remember { TransportStore() }
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    val titles = listOf(
-        "Home", "Children", "Calendar", "Payments", "Settings"
+    val tabs = listOf(
+        DashboardTab("Home", Icons.Default.Home),
+        DashboardTab("Children", Icons.Default.People),
+        DashboardTab("Calendar", Icons.Default.CalendarMonth),
+        DashboardTab("Trips", Icons.Default.DirectionsCar),
+        DashboardTab("Payments", Icons.Default.Payments),
+        DashboardTab("Settings", Icons.Default.Settings)
     )
 
     Scaffold(
-        containerColor = DashBg,
         bottomBar = {
             NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
+                containerColor = DashboardPurple,
+                contentColor = Color.White
             ) {
-                val icons = listOf(
-                    Icons.Default.Home,
-                    Icons.Default.People,
-                    Icons.Default.CalendarMonth,
-                    Icons.Default.AccountBalanceWallet,
-                    Icons.Default.Settings
-                )
-
-                titles.forEachIndexed { index, title ->
+                tabs.forEachIndexed { index, tab ->
                     NavigationBarItem(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         icon = {
-                            Icon(icons[index], contentDescription = title)
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = tab.title
+                            )
                         },
-                        label = { Text(title, fontSize = 10.sp) },
+                        label = {
+                            Text(tab.title)
+                        },
+                        alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = DashPurple,
-                            selectedTextColor = DashPurple,
-                            indicatorColor = Color(0xFFEBDDFA),
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray
+                            selectedIconColor = DashboardPurple,
+                            selectedTextColor = DashboardGold,
+                            indicatorColor = DashboardGold,
+                            unselectedIconColor = Color.White.copy(alpha = 0.7f),
+                            unselectedTextColor = Color.White.copy(alpha = 0.7f)
                         )
                     )
                 }
             }
-        }
-    ) { padding ->
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(innerPadding)
         ) {
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(DashDark, DashPurple)
-                        )
-                    )
-                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                    .background(DashboardPurple)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         "School Transport",
                         color = Color.White,
-                        fontSize = 20.sp,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         "Fare Manager",
-                        color = DashGold,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        color = DashboardGold,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
 
-                Icon(
-                    Icons.Default.DirectionsBus,
-                    contentDescription = "Bus",
-                    tint = DashGold,
-                    modifier = Modifier.size(38.dp)
-                )
-            }
-
-            when (selectedTab) {
-                0 -> HomeTab()
-                1 -> PlaceholderTab(
-                    "Children",
-                    "Manage student profiles and transport details.",
-                    Icons.Default.People
-                )
-                2 -> PlaceholderTab(
-                    "Calendar",
-                    "View daily Morning and Return attendance.",
-                    Icons.Default.CalendarMonth
-                )
-                3 -> PlaceholderTab(
-                    "Payments",
-                    "Track monthly fares, payments and balances.",
-                    Icons.Default.AccountBalanceWallet
-                )
-                4 -> SettingsTab(onLogout)
-            }
-        }
-    }
-}
-
-@Composable
-private fun HomeTab() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            "Dashboard",
-            color = DashDark,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            "Today's Overview",
-            color = Color.Gray,
-            fontSize = 14.sp
-        )
-
-        SummaryCard("Total Fare", "Rs. 0", Icons.Default.Payments)
-        SummaryCard("Paid Amount", "Rs. 0", Icons.Default.CheckCircle)
-        SummaryCard("Balance", "Rs. 0", Icons.Default.AccountBalanceWallet)
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            )
-        ) {
-            Column(Modifier.padding(18.dp)) {
                 Text(
-                    "Transport Summary",
-                    fontWeight = FontWeight.Bold,
-                    color = DashDark,
-                    fontSize = 17.sp
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "No trips recorded yet.",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SummaryCard(
-    title: String,
-    amount: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(3.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = Color(0xFFF0E5FF)
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = title,
-                    tint = DashPurple,
-                    modifier = Modifier.padding(12.dp).size(25.dp)
-                )
-            }
-
-            Spacer(Modifier.width(14.dp))
-
-            Column {
-                Text(title, color = Color.Gray, fontSize = 13.sp)
-                Text(
-                    amount,
-                    color = DashDark,
-                    fontSize = 22.sp,
+                    tabs[selectedTab].title,
+                    color = DashboardGold,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
-        }
-    }
-}
 
-@Composable
-private fun PlaceholderTab(
-    title: String,
-    description: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            icon,
-            contentDescription = title,
-            tint = DashPurple,
-            modifier = Modifier.size(65.dp)
-        )
-        Spacer(Modifier.height(18.dp))
-        Text(
-            title,
-            color = DashDark,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(10.dp))
-        Text(
-            description,
-            color = Color.Gray
-        )
-        Spacer(Modifier.height(18.dp))
-        Text(
-            "Coming soon",
-            color = DashPurple,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun SettingsTab(onLogout: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Text(
-            "Settings",
-            color = DashDark,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        SettingsItem("Profile & Account", Icons.Default.Person)
-        SettingsItem("Change Password", Icons.Default.Lock)
-        SettingsItem("Privacy & Security", Icons.Default.Security)
-        SettingsItem("App Information", Icons.Default.Info)
-
-        Spacer(Modifier.height(10.dp))
-
-        Button(
-            onClick = onLogout,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFB3261E)
-            )
-        ) {
-            Icon(Icons.Default.Logout, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Logout")
-        }
-
-        Text(
-            "School Transport Fare Manager • Version 1.0",
-            color = Color.Gray,
-            fontSize = 12.sp
-        )
-    }
-}
-
-@Composable
-private fun SettingsItem(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(17.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(icon, contentDescription = title, tint = DashPurple)
-            Spacer(Modifier.width(14.dp))
-            Text(
-                title,
-                color = DashDark,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(Modifier.weight(1f))
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = Color.Gray
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f)
+            ) {
+                when (selectedTab) {
+                    0 -> HomeScreen(store)
+                    1 -> ChildrenScreen(store)
+                    2 -> CalendarScreen(store)
+                    3 -> TripsScreen(store)
+                    4 -> PaymentsScreen(store)
+                    5 -> SettingsScreen(onLogout)
+                }
+            }
         }
     }
 }
