@@ -110,13 +110,35 @@ class TransportStore {
         }
 
         execute(
-            { repository.saveFarePlan(plan) },
-            "Payment method saved successfully"
+            {
+                repository.saveFarePlan(plan)
+
+                // Update currently assigned children.
+                // Existing trip records are deliberately untouched.
+                if (plan.id.isNotBlank()) {
+                    val assignedChildren = children.filter {
+                        it.farePlanId == plan.id
+                    }
+
+                    assignedChildren.forEach { child ->
+                        repository.saveChild(
+                            child.copy(
+                                farePlanName = plan.name.trim(),
+                                morningFare = plan.morningFare,
+                                returnFare = plan.returnFare
+                            )
+                        )
+                    }
+                }
+            },
+            "Payment configuration saved successfully"
         )
     }
 
     fun deleteFarePlan(id: String) {
-        val isAssigned = children.any { it.farePlanId == id }
+        val isAssigned = children.any {
+            it.farePlanId == id
+        }
 
         if (isAssigned) {
             errorMessage =
@@ -126,7 +148,7 @@ class TransportStore {
 
         execute(
             { repository.deleteFarePlan(id) },
-            "Payment method deleted successfully"
+            "Payment configuration deleted successfully"
         )
     }
 
@@ -142,8 +164,40 @@ class TransportStore {
             return
         }
 
+        if (child.age < 0) {
+            errorMessage = "Age cannot be negative"
+            return
+        }
+
+        val selectedPlan = farePlans.firstOrNull {
+            it.id == child.farePlanId
+        }
+
+        if (child.farePlanId.isNotBlank() && selectedPlan == null) {
+            errorMessage = "Selected payment configuration was not found"
+            return
+        }
+
+        // A new child must have a fare plan.
+        if (child.id.isBlank() && selectedPlan == null) {
+            errorMessage = "Please select a payment configuration"
+            return
+        }
+
+        val childToSave = if (selectedPlan != null) {
+            child.copy(
+                farePlanName = selectedPlan.name,
+                morningFare = selectedPlan.morningFare,
+                returnFare = selectedPlan.returnFare
+            )
+        } else {
+            // Existing legacy child without a plan:
+            // preserve the previously stored fares.
+            child
+        }
+
         execute(
-            { repository.saveChild(child) },
+            { repository.saveChild(childToSave) },
             "Child saved successfully"
         )
     }
