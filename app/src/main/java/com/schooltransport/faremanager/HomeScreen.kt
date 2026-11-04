@@ -8,7 +8,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -19,18 +21,40 @@ fun HomeScreen(
     store: TransportStore,
     onOpenFarePlans: () -> Unit
 ) {
+
+    val today = remember { Calendar.getInstance() }
+
     var selectedMonth by remember {
-        mutableStateOf(
-            SimpleDateFormat("yyyy-MM", Locale.getDefault())
-                .format(Calendar.getInstance().time)
+        mutableIntStateOf(today.get(Calendar.MONTH))
+    }
+
+    var selectedYear by remember {
+        mutableIntStateOf(today.get(Calendar.YEAR))
+    }
+
+    val monthKey = remember(selectedMonth, selectedYear) {
+        String.format(
+            Locale.US,
+            "%04d-%02d",
+            selectedYear,
+            selectedMonth + 1
         )
+    }
+
+    val monthName = remember(selectedMonth, selectedYear) {
+        SimpleDateFormat("MMMM yyyy", Locale.ENGLISH)
+            .format(
+                Calendar.getInstance().apply {
+                    set(selectedYear, selectedMonth, 1)
+                }.time
+            )
     }
 
     LaunchedEffect(Unit) {
         store.loadAll()
     }
 
-    val summary = store.monthlySummary(selectedMonth)
+    val summary = store.monthlySummary(monthKey)
 
     Column(
         modifier = Modifier
@@ -39,15 +63,21 @@ fun HomeScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+
+        // HEADER
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
                     "Dashboard",
-                    style = MaterialTheme.typography.headlineSmall
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
                 )
+
                 Text(
                     "Transport overview",
                     style = MaterialTheme.typography.bodyMedium
@@ -62,6 +92,8 @@ fun HomeScreen(
             }
         }
 
+        // MONTHLY OVERVIEW
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -70,80 +102,137 @@ fun HomeScreen(
         ) {
             Column(
                 Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+
                 Text(
                     "Monthly Overview",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
 
-                Text("Month: $selectedMonth")
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Total Fare")
-                    Text("Rs. ${summary.totalFare}")
+                    TextButton(
+                        onClick = {
+                            val calendar = Calendar.getInstance().apply {
+                                set(selectedYear, selectedMonth, 1)
+                                add(Calendar.MONTH, -1)
+                            }
+
+                            selectedMonth = calendar.get(Calendar.MONTH)
+                            selectedYear = calendar.get(Calendar.YEAR)
+                        }
+                    ) {
+                        Text("‹ Previous")
+                    }
+
+                    Text(
+                        monthName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    TextButton(
+                        onClick = {
+                            val calendar = Calendar.getInstance().apply {
+                                set(selectedYear, selectedMonth, 1)
+                                add(Calendar.MONTH, 1)
+                            }
+
+                            selectedMonth = calendar.get(Calendar.MONTH)
+                            selectedYear = calendar.get(Calendar.YEAR)
+                        }
+                    ) {
+                        Text("Next ›")
+                    }
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Paid")
-                    Text("Rs. ${summary.paidAmount}")
-                }
+                OverviewRow(
+                    "Total Fare",
+                    summary.totalFare
+                )
+
+                OverviewRow(
+                    "Paid Amount",
+                    summary.paidAmount
+                )
 
                 HorizontalDivider()
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        "Balance",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        "Rs. ${summary.balance}",
-                        style = MaterialTheme.typography.titleMedium
+                OverviewRow(
+                    "Balance",
+                    summary.balance,
+                    bold = true
+                )
+
+                if (summary.overpaid > 0) {
+                    OverviewRow(
+                        "Overpaid",
+                        summary.overpaid,
+                        bold = true
                     )
                 }
 
-                if (summary.overpaidAmount > 0) {
-                    Text("Overpaid: Rs. ${summary.overpaidAmount}")
-                }
+                Text(
+                    "${summary.tripCount} attendance records",
+                    style = MaterialTheme.typography.labelMedium
+                )
             }
         }
 
-        Card(Modifier.fillMaxWidth()) {
+        // CHILDREN
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     "Children",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                Text("Registered: ${store.children.size}")
-                Text("Active: ${store.children.count { it.isActive }}")
+
+                OverviewRow(
+                    "Registered",
+                    store.children.size.toDouble()
+                )
+
+                OverviewRow(
+                    "Active",
+                    store.children.count { it.isActive }.toDouble()
+                )
             }
         }
 
-        Card(Modifier.fillMaxWidth()) {
+        // PAYMENT CONFIGURATIONS
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     "Payment Configurations",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
+
                 Text(
                     "Create and manage different morning and return fare plans."
                 )
-                Text("Available plans: ${store.farePlans.size}")
+
+                Text(
+                    "Available plans: ${store.farePlans.size}"
+                )
 
                 Button(
                     onClick = onOpenFarePlans,
@@ -154,19 +243,27 @@ fun HomeScreen(
             }
         }
 
-        Card(Modifier.fillMaxWidth()) {
+        // QUICK INFORMATION
+
+        Card(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     "Quick Information",
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
+
                 Text("Recorded trips: ${store.trips.size}")
                 Text("Payment records: ${store.payments.size}")
             }
         }
+
+        // MESSAGES
 
         store.errorMessage?.let { message ->
             Text(
@@ -181,5 +278,35 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.primary
             )
         }
+    }
+}
+
+@Composable
+private fun OverviewRow(
+    label: String,
+    amount: Double,
+    bold: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            fontWeight = if (bold) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Normal
+            }
+        )
+
+        Text(
+            "Rs. ${"%.2f".format(Locale.US, amount)}",
+            fontWeight = if (bold) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Medium
+            }
+        )
     }
 }
