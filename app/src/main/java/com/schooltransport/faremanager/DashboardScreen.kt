@@ -1,3 +1,4 @@
+
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
@@ -11,10 +12,16 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun DashboardScreen(onLogout: () -> Unit) {
+
     val store = remember { TransportStore() }
 
-    var selectedTab by remember { mutableIntStateOf(0) }
-    var showFarePlans by remember { mutableStateOf(false) }
+    var selectedTab by remember {
+        mutableIntStateOf(0)
+    }
+
+    var showFarePlans by remember {
+        mutableStateOf(false)
+    }
 
     val titles = listOf(
         "Home",
@@ -35,18 +42,26 @@ fun DashboardScreen(onLogout: () -> Unit) {
     )
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
+
+        // TOP HEADER
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
+                .padding(
+                    horizontal = 18.dp,
+                    vertical = 16.dp
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             if (showFarePlans) {
                 IconButton(
-                    onClick = { showFarePlans = false }
+                    onClick = {
+                        showFarePlans = false
+                    }
                 ) {
                     Icon(
                         Icons.Default.ArrowBack,
@@ -55,17 +70,20 @@ fun DashboardScreen(onLogout: () -> Unit) {
                 }
             }
 
-            Column(Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    if (showFarePlans) {
+                    text = if (showFarePlans) {
                         "Payment Configurations"
                     } else {
                         "School Transport"
                     },
                     style = MaterialTheme.typography.titleLarge
                 )
+
                 Text(
-                    if (showFarePlans) {
+                    text = if (showFarePlans) {
                         "Manage your transport fare plans"
                     } else {
                         "Fare Manager"
@@ -77,15 +95,22 @@ fun DashboardScreen(onLogout: () -> Unit) {
 
         HorizontalDivider()
 
+        // MAIN CONTENT
+
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         ) {
+
             if (showFarePlans) {
+
                 FarePlansScreen(store)
+
             } else {
+
                 when (selectedTab) {
+
                     0 -> HomeScreen(
                         store = store,
                         onOpenFarePlans = {
@@ -102,7 +127,11 @@ fun DashboardScreen(onLogout: () -> Unit) {
                     4 -> PaymentsScreen(store)
 
                     5 -> SettingsScreen(
-                        onLogout = onLogout,
+                        onLogout = {
+                            showFarePlans = false
+                            selectedTab = 0
+                            onLogout()
+                        },
                         onOpenFarePlans = {
                             showFarePlans = true
                         }
@@ -111,19 +140,33 @@ fun DashboardScreen(onLogout: () -> Unit) {
             }
         }
 
+        // BOTTOM NAVIGATION
+
         if (!showFarePlans) {
+
             NavigationBar {
+
                 titles.forEachIndexed { index, title ->
+
                     NavigationBarItem(
                         selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+
+                        onClick = {
+                            selectedTab = index
+                        },
+
                         icon = {
                             Icon(
-                                icons[index],
+                                imageVector = icons[index],
                                 contentDescription = title
                             )
                         },
-                        label = { Text(title) }
+
+                        label = {
+                            Text(title)
+                        },
+
+                        alwaysShowLabel = true
                     )
                 }
             }
