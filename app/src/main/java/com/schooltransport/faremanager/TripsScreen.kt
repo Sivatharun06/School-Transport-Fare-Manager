@@ -25,6 +25,7 @@ import java.util.Locale
 
 @Composable
 fun TripsScreen(store: TransportStore) {
+
     var showDialog by remember { mutableStateOf(false) }
     var editingTrip by remember { mutableStateOf<TransportTrip?>(null) }
 
@@ -67,7 +68,10 @@ fun TripsScreen(store: TransportStore) {
         Spacer(Modifier.height(12.dp))
 
         store.errorMessage?.let {
-            Text(it, color = MaterialTheme.colorScheme.error)
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error
+            )
         }
 
         if (store.children.isEmpty()) {
@@ -93,7 +97,11 @@ fun TripsScreen(store: TransportStore) {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
-                items(store.trips, key = { it.id }) { trip ->
+                items(
+                    items = store.trips,
+                    key = { it.id }
+                ) { trip ->
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
@@ -112,10 +120,13 @@ fun TripsScreen(store: TransportStore) {
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
+
                                 Text("Date: ${trip.date}")
+
                                 if (trip.time.isNotBlank()) {
                                     Text("Time: ${trip.time}")
                                 }
+
                                 if (trip.fromLocation.isNotBlank() ||
                                     trip.toLocation.isNotBlank()
                                 ) {
@@ -123,17 +134,29 @@ fun TripsScreen(store: TransportStore) {
                                         "${trip.fromLocation} → ${trip.toLocation}"
                                     )
                                 }
+
                                 Text(
                                     "Morning: ${if (trip.morningDone) "Done" else "Not done"}"
                                 )
+
                                 Text(
                                     "Return: ${if (trip.returnDone) "Done" else "Not done"}"
                                 )
+
                                 Text(
-                                    "Total: Rs. ${trip.totalFare}",
+                                    "Morning fare: Rs. ${trip.morningFare.toInt()}"
+                                )
+
+                                Text(
+                                    "Return fare: Rs. ${trip.returnFare.toInt()}"
+                                )
+
+                                Text(
+                                    "Total: Rs. ${trip.totalFare.toInt()}",
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.primary
                                 )
+
                                 if (trip.note.isNotBlank()) {
                                     Text("Note: ${trip.note}")
                                 }
@@ -195,9 +218,16 @@ private fun TripFormDialog(
     onDismiss: () -> Unit,
     onSave: (TransportTrip) -> Unit
 ) {
+
     var selectedChild by remember(existingTrip, children) {
         mutableStateOf(
-            children.firstOrNull { it.id == existingTrip?.childId }
+            children.firstOrNull {
+                it.id == existingTrip?.childId
+            } ?: if (existingTrip == null) {
+                children.firstOrNull()
+            } else {
+                null
+            }
         )
     }
 
@@ -222,16 +252,14 @@ private fun TripFormDialog(
     var fromLocation by remember(existingTrip, children) {
         mutableStateOf(
             existingTrip?.fromLocation
-                ?: children.firstOrNull { it.id == existingTrip?.childId }
-                    ?.fromLocation.orEmpty()
+                ?: children.firstOrNull()?.fromLocation.orEmpty()
         )
     }
 
     var toLocation by remember(existingTrip, children) {
         mutableStateOf(
             existingTrip?.toLocation
-                ?: children.firstOrNull { it.id == existingTrip?.childId }
-                    ?.toLocation.orEmpty()
+                ?: children.firstOrNull()?.toLocation.orEmpty()
         )
     }
 
@@ -243,25 +271,41 @@ private fun TripFormDialog(
         mutableStateOf(existingTrip?.returnDone ?: false)
     }
 
-    var morningFare by remember(existingTrip) {
-        mutableStateOf(existingTrip?.morningFare?.toString() ?: "400")
+    var morningFare by remember(existingTrip, children) {
+        mutableStateOf(
+            existingTrip?.morningFare?.toString()
+                ?: children.firstOrNull()?.morningFare?.toString()
+                ?: "400"
+        )
     }
 
-    var returnFare by remember(existingTrip) {
-        mutableStateOf(existingTrip?.returnFare?.toString() ?: "400")
+    var returnFare by remember(existingTrip, children) {
+        mutableStateOf(
+            existingTrip?.returnFare?.toString()
+                ?: children.firstOrNull()?.returnFare?.toString()
+                ?: "400"
+        )
     }
 
     var note by remember(existingTrip) {
         mutableStateOf(existingTrip?.note ?: "")
     }
 
-    var showChildPicker by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf("") }
+    var showChildPicker by remember {
+        mutableStateOf(false)
+    }
+
+    var error by remember {
+        mutableStateOf("")
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (existingTrip == null) "Add Trip" else "Edit Trip")
+            Text(
+                if (existingTrip == null) "Add Trip"
+                else "Edit Trip"
+            )
         },
         text = {
             Column(
@@ -271,8 +315,11 @@ private fun TripFormDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 OutlinedButton(
-                    onClick = { showChildPicker = true },
+                    onClick = {
+                        showChildPicker = true
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(selectedChild?.name ?: "Select Child")
@@ -312,7 +359,9 @@ private fun TripFormDialog(
 
                 HorizontalDivider()
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Checkbox(
                         checked = morningDone,
                         onCheckedChange = { morningDone = it }
@@ -331,7 +380,9 @@ private fun TripFormDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Checkbox(
                         checked = returnDone,
                         onCheckedChange = { returnDone = it }
@@ -368,6 +419,7 @@ private fun TripFormDialog(
         confirmButton = {
             Button(
                 onClick = {
+
                     val morning = morningFare.toDoubleOrNull()
                     val returning = returnFare.toDoubleOrNull()
 
@@ -378,7 +430,9 @@ private fun TripFormDialog(
                         !isValidTripDate(date) ->
                             error = "Enter a valid date (YYYY-MM-DD)"
 
-                        !time.matches(Regex("^([01]\\d|2[0-3]):[0-5]\\d$")) ->
+                        !time.matches(
+                            Regex("^([01]\\d|2[0-3]):[0-5]\\d$")
+                        ) ->
                             error = "Enter time as HH:mm"
 
                         morning == null || returning == null ||
@@ -389,6 +443,7 @@ private fun TripFormDialog(
                             error = "Select at least one completed trip"
 
                         else -> {
+
                             val child = selectedChild!!
 
                             onSave(
@@ -425,8 +480,12 @@ private fun TripFormDialog(
 
     if (showChildPicker) {
         AlertDialog(
-            onDismissRequest = { showChildPicker = false },
-            title = { Text("Select Child") },
+            onDismissRequest = {
+                showChildPicker = false
+            },
+            title = {
+                Text("Select Child")
+            },
             text = {
                 Column(
                     modifier = Modifier
@@ -434,14 +493,26 @@ private fun TripFormDialog(
                         .verticalScroll(rememberScrollState())
                 ) {
                     children.forEach { child ->
+
                         TextButton(
                             onClick = {
                                 selectedChild = child
                                 fromLocation = child.fromLocation
                                 toLocation = child.toLocation
-                                morningFare = child.morningFare.toString()
-                                returnFare = child.returnFare.toString()
+
+                                // New child selection uses current plan fares.
+                                // Editing the same child does not overwrite
+                                // the existing trip's fare snapshot.
+                                if (child.id != existingTrip?.childId) {
+                                    morningFare =
+                                        child.morningFare.toString()
+
+                                    returnFare =
+                                        child.returnFare.toString()
+                                }
+
                                 showChildPicker = false
+                                error = ""
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -451,7 +522,11 @@ private fun TripFormDialog(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showChildPicker = false }) {
+                TextButton(
+                    onClick = {
+                        showChildPicker = false
+                    }
+                ) {
                     Text("Close")
                 }
             }
