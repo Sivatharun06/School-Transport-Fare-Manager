@@ -52,6 +52,10 @@ jobs:
           echo "Checking tracked file..."
           git ls-files app/google-services.json
           test -f app/google-services.json
+          
+      - name: Validate Android Manifest
+        run: |
+          python3 -c "import xml.etree.ElementTree as ET; ET.parse('app/src/main/AndroidManifest.xml'); print('Manifest XML is valid')"
    
       - name: Build Debug APK
         run: gradle assembleDebug
