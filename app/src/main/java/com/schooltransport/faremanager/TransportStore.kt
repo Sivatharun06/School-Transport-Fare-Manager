@@ -22,6 +22,9 @@ class TransportStore {
     private val repository = TransportRepository()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
+    var farePlans by mutableStateOf<List<FarePlan>>(emptyList())
+        private set
+
     var children by mutableStateOf<List<TransportChild>>(emptyList())
         private set
 
@@ -56,6 +59,9 @@ class TransportStore {
     }
 
     private suspend fun refreshData() {
+        farePlans = repository.getFarePlans()
+            .sortedBy { it.name.lowercase() }
+
         children = repository.getChildren()
             .sortedBy { it.name.lowercase() }
 
@@ -88,6 +94,44 @@ class TransportStore {
                 isLoading = false
             }
         }
+    }
+
+    // FARE PLANS
+
+    fun saveFarePlan(plan: FarePlan) {
+        if (plan.name.isBlank()) {
+            errorMessage = "Payment method name is required"
+            return
+        }
+
+        if (plan.morningFare < 0 || plan.returnFare < 0) {
+            errorMessage = "Fare amounts cannot be negative"
+            return
+        }
+
+        execute(
+            { repository.saveFarePlan(plan) },
+            "Payment method saved successfully"
+        )
+    }
+
+    fun deleteFarePlan(id: String) {
+        val isAssigned = children.any { it.farePlanId == id }
+
+        if (isAssigned) {
+            errorMessage =
+                "This payment method is assigned to a child. Change the child's plan first."
+            return
+        }
+
+        execute(
+            { repository.deleteFarePlan(id) },
+            "Payment method deleted successfully"
+        )
+    }
+
+    fun findFarePlan(id: String): FarePlan? {
+        return farePlans.find { it.id == id }
     }
 
     // CHILDREN
