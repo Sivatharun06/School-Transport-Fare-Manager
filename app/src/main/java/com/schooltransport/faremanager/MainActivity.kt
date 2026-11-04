@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.schooltransport.faremanager.ui.theme.SchoolTransportTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -24,7 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MaterialTheme {
+            SchoolTransportTheme {
                 SchoolTransportApp()
             }
         }
@@ -50,8 +51,6 @@ fun SchoolTransportApp() {
         mutableStateOf(false)
     }
 
-    // Listen for Firebase authentication changes.
-
     DisposableEffect(auth) {
 
         val authListener =
@@ -75,7 +74,6 @@ fun SchoolTransportApp() {
     when {
 
         isAuthenticated -> {
-
             key(auth.currentUser?.uid) {
                 DashboardScreen(
                     onLogout = {
@@ -86,7 +84,6 @@ fun SchoolTransportApp() {
         }
 
         showLogin -> {
-
             AuthScreen(
                 onAuthenticated = {
                     isAuthenticated = true
@@ -95,7 +92,6 @@ fun SchoolTransportApp() {
         }
 
         else -> {
-
             SplashScreen(
                 onGetStarted = {
                     showLogin = true
