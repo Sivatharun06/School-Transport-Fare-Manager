@@ -17,8 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -33,125 +35,170 @@ class MainActivity : ComponentActivity() {
 private val DeepPurple = Color(0xFF241044)
 private val Purple = Color(0xFF51247A)
 private val Gold = Color(0xFFFFC857)
-private val LightGold = Color(0xFFFFE6A6)
 
 @Composable
 fun SchoolTransportApp() {
-    var showLogin by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = DeepPurple
+    var showLogin by remember {
+        mutableStateOf(false)
+    }
+
+    var isAuthenticated by remember {
+        mutableStateOf(
+            FirebaseAuth.getInstance().currentUser != null
+        )
+    }
+
+    when {
+        isAuthenticated -> {
+            SuccessScreen(
+                onLogout = {
+                    FirebaseAuth.getInstance().signOut()
+                    isAuthenticated = false
+                    showLogin = false
+                }
+            )
+        }
+
+        showLogin -> {
+            AuthScreen(
+                onAuthenticated = {
+                    isAuthenticated = true
+                }
+            )
+        }
+
+        else -> {
+            SplashScreen(
+                onGetStarted = {
+                    showLogin = true
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SplashScreen(
+    onGetStarted: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(DeepPurple, Purple, DeepPurple)
+                )
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(DeepPurple, Purple, DeepPurple)
-                    )
-                ),
-            contentAlignment = Alignment.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(24.dp)
         ) {
-            if (!showLogin) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    Text("🚌", fontSize = 76.sp)
+            Text("🚌", fontSize = 76.sp)
 
-                    Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(20.dp))
 
-                    Text(
-                        "School Transport",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            Text(
+                "School Transport",
+                color = Color.White,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-                    Text(
-                        "Fare Manager",
-                        color = Gold,
-                        fontSize = 27.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            Text(
+                "Fare Manager",
+                color = Gold,
+                fontSize = 27.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-                    Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(14.dp))
 
-                    Box(
-                        Modifier
-                            .width(75.dp)
-                            .height(4.dp)
-                            .background(LightGold, RoundedCornerShape(10.dp))
-                    )
+            Box(
+                Modifier
+                    .width(75.dp)
+                    .height(4.dp)
+                    .background(Gold, RoundedCornerShape(10.dp))
+            )
 
-                    Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(18.dp))
 
-                    Text(
-                        "Manage school transport fares easily",
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center
-                    )
+            Text(
+                "Manage school transport fares easily",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
 
-                    Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(32.dp))
 
-                    Button(
-                        onClick = { showLogin = true },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Gold,
-                            contentColor = DeepPurple
-                        )
-                    ) {
-                        Text("Get Started", fontWeight = FontWeight.Bold)
-                    }
+            Button(
+                onClick = onGetStarted,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Gold,
+                    contentColor = DeepPurple
+                )
+            ) {
+                Text(
+                    "Get Started",
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-                    Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
 
-                    Text(
-                        "Version 1.0",
-                        color = LightGold,
-                        fontSize = 12.sp
-                    )
-                }
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        "Welcome Back",
-                        color = Gold,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            Text(
+                "Version 1.0",
+                color = Gold,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
 
-                    Spacer(Modifier.height(12.dp))
+@Composable
+private fun SuccessScreen(
+    onLogout: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(DeepPurple, Purple, DeepPurple)
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(24.dp)
+        ) {
+            Text("🎉", fontSize = 64.sp)
 
-                    Text(
-                        "School Transport Fare Manager",
-                        color = Color.White,
-                        fontSize = 15.sp
-                    )
+            Spacer(Modifier.height(20.dp))
 
-                    Spacer(Modifier.height(30.dp))
+            Text(
+                "Login Successful!",
+                color = Gold,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-                    Text(
-                        "Login and Signup screens are coming next.",
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
+            Spacer(Modifier.height(12.dp))
 
-                    Spacer(Modifier.height(24.dp))
+            Text(
+                "Welcome to School Transport Fare Manager",
+                color = Color.White,
+                textAlign = TextAlign.Center
+            )
 
-                    OutlinedButton(
-                        onClick = { showLogin = false }
-                    ) {
-                        Text("Back", color = Gold)
-                    }
-                }
+            Spacer(Modifier.height(24.dp))
+
+            Button(onClick = onLogout) {
+                Text("Logout")
             }
         }
     }
