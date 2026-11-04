@@ -2,354 +2,210 @@
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun SettingsScreen(
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onOpenFarePlans: () -> Unit
 ) {
-    val auth = remember { FirebaseAuth.getInstance() }
-    val user = auth.currentUser
-
-    var showLogoutDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var showResetDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var resetMessage by remember {
-        mutableStateOf("")
-    }
-
-    var resetError by remember {
-        mutableStateOf(false)
-    }
-
-    var sendingReset by remember {
-        mutableStateOf(false)
-    }
+    val user = FirebaseAuth.getInstance().currentUser
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
             "Settings",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.headlineSmall
         )
 
-        Spacer(Modifier.height(20.dp))
-
-        // ACCOUNT PROFILE
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically
+        Card(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(42.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                Text(
+                    "Account Information",
+                    style = MaterialTheme.typography.titleMedium
                 )
 
-                Spacer(Modifier.width(14.dp))
+                Text("Email: ${user?.email ?: "Not available"}")
 
-                Column {
-                    Text(
-                        "Account Profile",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                Text(
+                    if (user?.isEmailVerified == true) {
+                        "Email verified"
+                    } else {
+                        "Email not verified"
+                    },
+                    color = if (user?.isEmailVerified == true) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    }
+                )
+            }
+        }
 
-                    Text(
-                        user?.email ?: "No email available",
-                        style = MaterialTheme.typography.bodyMedium
+        Card(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Payments,
+                        contentDescription = null
                     )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Payment Configurations",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
 
-                    Text(
-                        if (user?.isEmailVerified == true)
-                            "Email verified"
-                        else
-                            "Email not verified",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (user?.isEmailVerified == true)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.error
-                    )
+                Text(
+                    "Manage multiple fare plans with different morning and return prices."
+                )
+
+                Text("Total plans: Manage them from this section.")
+
+                Button(
+                    onClick = onOpenFarePlans,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Open Payment Configurations")
                 }
             }
         }
 
-        Spacer(Modifier.height(18.dp))
+        Card(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "Account Security",
+                    style = MaterialTheme.typography.titleMedium
+                )
 
-        Text(
-            "Account & Security",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        SettingsItem(
-            icon = {
-                Icon(Icons.Default.Lock, contentDescription = null)
-            },
-            title = "Reset Password",
-            subtitle = "Receive a password reset email",
-            onClick = {
-                resetMessage = ""
-                showResetDialog = true
+                OutlinedButton(
+                    onClick = { showResetDialog = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Reset Password")
+                }
             }
-        )
+        }
 
-        SettingsItem(
-            icon = {
-                Icon(Icons.Default.Refresh, contentDescription = null)
-            },
-            title = "Refresh Account",
-            subtitle = "Reload your account information",
-            onClick = {
-                auth.currentUser?.reload()
+        Card(Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "Application Information",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text("School Transport Fare Manager")
+                Text("Version 1.0")
+                Text("Cloud database: Firebase Firestore")
             }
-        )
+        }
 
-        Spacer(Modifier.height(18.dp))
-
-        Text(
-            "Application",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        SettingsItem(
-            icon = {
-                Icon(Icons.Default.Info, contentDescription = null)
-            },
-            title = "App Information",
-            subtitle = "School Transport Fare Manager · Version 1.0",
-            onClick = {
-                resetMessage = "School Transport Fare Manager\nVersion 1.0"
-                resetError = false
-                showResetDialog = true
-            }
-        )
-
-        Spacer(Modifier.weight(1f))
-
-        OutlinedButton(
-            onClick = {
-                showLogoutDialog = true
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
+        Button(
+            onClick = { showLogoutDialog = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
             )
         ) {
-            Icon(
-                Icons.Default.Logout,
-                contentDescription = null
-            )
-            Spacer(Modifier.width(8.dp))
             Text("Logout")
         }
 
-        Spacer(Modifier.height(12.dp))
-
-        Text(
-            "Your transport data is stored securely in your Firebase account.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (message.isNotBlank()) {
+            Text(
+                message,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 
-    // LOGOUT CONFIRMATION
-
-    if (showLogoutDialog) {
+    if (showResetDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showLogoutDialog = false
-            },
-            title = {
-                Text("Logout?")
-            },
+            onDismissRequest = { showResetDialog = false },
+            title = { Text("Reset Password") },
             text = {
-                Text("Are you sure you want to logout?")
+                Text("Send a password reset email to ${user?.email ?: "your account"}?")
             },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
-                        showLogoutDialog = false
-                        auth.signOut()
-                        onLogout()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                        val email = user?.email
+                        if (!email.isNullOrBlank()) {
+                            FirebaseAuth.getInstance()
+                                .sendPasswordResetEmail(email)
+                                .addOnSuccessListener {
+                                    message = "Password reset email sent."
+                                }
+                                .addOnFailureListener {
+                                    message = it.message ?: "Unable to send reset email."
+                                }
+                        } else {
+                            message = "Account email not available."
+                        }
+                        showResetDialog = false
+                    }
                 ) {
-                    Text("Logout")
+                    Text("Send Email")
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                    }
-                ) {
+                TextButton(onClick = { showResetDialog = false }) {
                     Text("Cancel")
                 }
             }
         )
     }
 
-    // PASSWORD RESET / APP INFORMATION
-
-    if (showResetDialog) {
+    if (showLogoutDialog) {
         AlertDialog(
-            onDismissRequest = {
-                if (!sendingReset) showResetDialog = false
-            },
-            title = {
-                Text(
-                    if (resetMessage.isNotBlank())
-                        "Information"
-                    else
-                        "Reset Password"
-                )
-            },
-            text = {
-                Column {
-                    if (resetMessage.isNotBlank()) {
-                        Text(resetMessage)
-                    } else {
-                        Text(
-                            "A password reset link will be sent to:\n\n${user?.email ?: "No email available"}"
-                        )
-                    }
-                }
-            },
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout?") },
+            text = { Text("Are you sure you want to logout?") },
             confirmButton = {
-                if (resetMessage.isNotBlank()) {
-                    TextButton(
-                        onClick = {
-                            showResetDialog = false
-                        }
-                    ) {
-                        Text("OK")
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
                     }
-                } else {
-                    Button(
-                        enabled = !sendingReset && !user?.email.isNullOrBlank(),
-                        onClick = {
-                            val email = user?.email
-
-                            if (!email.isNullOrBlank()) {
-                                sendingReset = true
-
-                                auth.sendPasswordResetEmail(email)
-                                    .addOnCompleteListener { task ->
-                                        sendingReset = false
-
-                                        if (task.isSuccessful) {
-                                            resetMessage =
-                                                "Password reset email sent to $email"
-                                            resetError = false
-                                        } else {
-                                            resetMessage =
-                                                task.exception?.message
-                                                    ?: "Unable to send reset email"
-                                            resetError = true
-                                        }
-                                    }
-                            }
-                        }
-                    ) {
-                        if (sendingReset) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Send Email")
-                        }
-                    }
+                ) {
+                    Text("Logout")
                 }
             },
             dismissButton = {
-                if (resetMessage.isBlank()) {
-                    TextButton(
-                        enabled = !sendingReset,
-                        onClick = {
-                            showResetDialog = false
-                        }
-                    ) {
-                        Text("Cancel")
-                    }
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text("Cancel")
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun SettingsItem(
-    icon: @Composable () -> Unit,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(14.dp),
-        onClick = onClick
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            icon()
-
-            Spacer(Modifier.width(14.dp))
-
-            Column {
-                Text(
-                    title,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
     }
 }
