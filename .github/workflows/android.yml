@@ -56,7 +56,14 @@ jobs:
       - name: Validate Android Manifest
         run: |
           python3 -c "import xml.etree.ElementTree as ET; ET.parse('app/src/main/AndroidManifest.xml'); print('Manifest XML is valid')"
-   
+
+      - name: Check App Icon
+        run: |
+          echo "Checking drawable folder:"
+          find app/src/main/res -maxdepth 3 -type f
+          echo "Checking icon:"
+          ls -l app/src/main/res/drawable/ic_launcher.png
+    
       - name: Build Debug APK
         run: gradle assembleDebug
 
