@@ -1,3 +1,4 @@
+
 package com.schooltransport.faremanager
 
 import com.google.firebase.auth.FirebaseAuth
@@ -9,11 +10,14 @@ class TransportRepository {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
+    // USER-SPECIFIC COLLECTION
+
     private fun userCollection(name: String) =
         db.collection("users")
             .document(
                 auth.currentUser?.uid
-                    ?: throw IllegalStateException("Please login")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: throw IllegalStateException("Please login first")
             )
             .collection(name)
 
@@ -21,24 +25,34 @@ class TransportRepository {
 
     suspend fun getFarePlans(): List<FarePlan> {
         return userCollection("farePlans")
-            .get().await()
-            .documents.mapNotNull {
-                it.toObject(FarePlan::class.java)?.copy(id = it.id)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { document ->
+                document.toObject(FarePlan::class.java)
+                    ?.copy(id = document.id)
             }
     }
 
     suspend fun saveFarePlan(plan: FarePlan) {
-        val ref = userCollection("farePlans")
+        val collection = userCollection("farePlans")
 
-        if (plan.id.isBlank()) {
-            val doc = ref.document()
-            doc.set(plan.copy(id = doc.id)).await()
+        val document = if (plan.id.isBlank()) {
+            collection.document()
         } else {
-            ref.document(plan.id).set(plan).await()
+            collection.document(plan.id)
         }
+
+        document.set(
+            plan.copy(id = document.id)
+        ).await()
     }
 
     suspend fun deleteFarePlan(id: String) {
+        require(id.isNotBlank()) {
+            "Invalid payment configuration ID"
+        }
+
         userCollection("farePlans")
             .document(id)
             .delete()
@@ -49,24 +63,34 @@ class TransportRepository {
 
     suspend fun getChildren(): List<TransportChild> {
         return userCollection("children")
-            .get().await()
-            .documents.mapNotNull {
-                it.toObject(TransportChild::class.java)?.copy(id = it.id)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { document ->
+                document.toObject(TransportChild::class.java)
+                    ?.copy(id = document.id)
             }
     }
 
     suspend fun saveChild(child: TransportChild) {
-        val ref = userCollection("children")
+        val collection = userCollection("children")
 
-        if (child.id.isBlank()) {
-            val doc = ref.document()
-            doc.set(child.copy(id = doc.id)).await()
+        val document = if (child.id.isBlank()) {
+            collection.document()
         } else {
-            ref.document(child.id).set(child).await()
+            collection.document(child.id)
         }
+
+        document.set(
+            child.copy(id = document.id)
+        ).await()
     }
 
     suspend fun deleteChild(id: String) {
+        require(id.isNotBlank()) {
+            "Invalid child ID"
+        }
+
         userCollection("children")
             .document(id)
             .delete()
@@ -77,24 +101,34 @@ class TransportRepository {
 
     suspend fun getTrips(): List<TransportTrip> {
         return userCollection("trips")
-            .get().await()
-            .documents.mapNotNull {
-                it.toObject(TransportTrip::class.java)?.copy(id = it.id)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { document ->
+                document.toObject(TransportTrip::class.java)
+                    ?.copy(id = document.id)
             }
     }
 
     suspend fun saveTrip(trip: TransportTrip) {
-        val ref = userCollection("trips")
+        val collection = userCollection("trips")
 
-        if (trip.id.isBlank()) {
-            val doc = ref.document()
-            doc.set(trip.copy(id = doc.id)).await()
+        val document = if (trip.id.isBlank()) {
+            collection.document()
         } else {
-            ref.document(trip.id).set(trip).await()
+            collection.document(trip.id)
         }
+
+        document.set(
+            trip.copy(id = document.id)
+        ).await()
     }
 
     suspend fun deleteTrip(id: String) {
+        require(id.isNotBlank()) {
+            "Invalid trip ID"
+        }
+
         userCollection("trips")
             .document(id)
             .delete()
@@ -105,24 +139,34 @@ class TransportRepository {
 
     suspend fun getPayments(): List<TransportPayment> {
         return userCollection("payments")
-            .get().await()
-            .documents.mapNotNull {
-                it.toObject(TransportPayment::class.java)?.copy(id = it.id)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { document ->
+                document.toObject(TransportPayment::class.java)
+                    ?.copy(id = document.id)
             }
     }
 
     suspend fun savePayment(payment: TransportPayment) {
-        val ref = userCollection("payments")
+        val collection = userCollection("payments")
 
-        if (payment.id.isBlank()) {
-            val doc = ref.document()
-            doc.set(payment.copy(id = doc.id)).await()
+        val document = if (payment.id.isBlank()) {
+            collection.document()
         } else {
-            ref.document(payment.id).set(payment).await()
+            collection.document(payment.id)
         }
+
+        document.set(
+            payment.copy(id = document.id)
+        ).await()
     }
 
     suspend fun deletePayment(id: String) {
+        require(id.isNotBlank()) {
+            "Invalid payment ID"
+        }
+
         userCollection("payments")
             .document(id)
             .delete()
