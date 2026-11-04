@@ -1,11 +1,13 @@
 
 package com.schooltransport.faremanager
 
+import android.util.Patterns
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -19,7 +21,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -39,12 +40,14 @@ fun AuthScreen(
     var isRegister by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(true) }
     var passwordVisible by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
+    var messageIsSuccess by remember { mutableStateOf(false) }
 
-    val auth = remember { FirebaseAuth.getInstance() }
+    val auth = remember {
+        FirebaseAuth.getInstance()
+    }
 
     Box(
         modifier = Modifier
@@ -67,6 +70,7 @@ fun AuthScreen(
                 .padding(horizontal = 22.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Spacer(Modifier.height(20.dp))
 
             Surface(
@@ -112,15 +116,17 @@ fun AuthScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(32.dp),
-                color = Color.White.copy(alpha = 0.85f),
+                color = Color.White.copy(alpha = 0.9f),
                 shadowElevation = 12.dp
             ) {
                 Column(
                     modifier = Modifier.padding(22.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
+
                     Text(
-                        if (isRegister) "Create Account" else "Welcome Back!",
+                        if (isRegister) "Create Account"
+                        else "Welcome Back!",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = AuthDark
@@ -139,14 +145,23 @@ fun AuthScreen(
 
                     Spacer(Modifier.height(24.dp))
 
+                    // EMAIL
+
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            message = ""
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        enabled = !loading,
                         label = { Text("Email Address") },
                         leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = "Email")
+                            Icon(
+                                Icons.Default.Email,
+                                contentDescription = "Email"
+                            )
                         },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email
@@ -161,18 +176,29 @@ fun AuthScreen(
 
                     Spacer(Modifier.height(14.dp))
 
+                    // PASSWORD
+
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            message = ""
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        enabled = !loading,
                         label = { Text("Password") },
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = "Password")
+                            Icon(
+                                Icons.Default.Lock,
+                                contentDescription = "Password"
+                            )
                         },
                         trailingIcon = {
                             IconButton(
-                                onClick = { passwordVisible = !passwordVisible }
+                                onClick = {
+                                    passwordVisible = !passwordVisible
+                                }
                             ) {
                                 Icon(
                                     if (passwordVisible)
@@ -183,10 +209,11 @@ fun AuthScreen(
                                 )
                             }
                         },
-                        visualTransformation = if (passwordVisible)
+                        visualTransformation = if (passwordVisible) {
                             VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
+                        } else {
+                            PasswordVisualTransformation()
+                        },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password
                         ),
@@ -198,48 +225,50 @@ fun AuthScreen(
                         )
                     )
 
+                    // FORGOT PASSWORD
+
                     if (!isRegister) {
-                        Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(8.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.End
                         ) {
-                            Checkbox(
-                                checked = rememberMe,
-                                onCheckedChange = { rememberMe = it },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = AuthPurple
-                                )
-                            )
-
-                            Text(
-                                "Remember Me",
-                                color = AuthDark,
-                                fontSize = 13.sp
-                            )
-
-                            Spacer(Modifier.weight(1f))
-
                             TextButton(
+                                enabled = !loading,
                                 onClick = {
                                     message = ""
-                                    if (email.isBlank()) {
+                                    messageIsSuccess = false
+
+                                    val cleanEmail = email.trim()
+
+                                    if (cleanEmail.isBlank()) {
                                         message = "Enter your email first."
+                                    } else if (
+                                        !Patterns.EMAIL_ADDRESS
+                                            .matcher(cleanEmail)
+                                            .matches()
+                                    ) {
+                                        message = "Enter a valid email address."
                                     } else {
                                         loading = true
-                                        auth.sendPasswordResetEmail(email.trim())
-                                            .addOnCompleteListener {
+
+                                        auth.sendPasswordResetEmail(cleanEmail)
+                                            .addOnCompleteListener { result ->
                                                 loading = false
-                                                message = if (it.isSuccessful)
-                                                    "Password reset email sent."
-                                                else
-                                                    it.exception?.localizedMessage
-                                                        ?: "Could not send reset email."
+
+                                                if (result.isSuccessful) {
+                                                    message =
+                                                        "Password reset email sent. Check your inbox."
+                                                    messageIsSuccess = true
+                                                } else {
+                                                    message =
+                                                        result.exception?.localizedMessage
+                                                            ?: "Could not send reset email."
+                                                }
                                             }
                                     }
-                                },
-                                enabled = !loading
+                                }
                             ) {
                                 Text(
                                     "Forgot Password?",
@@ -250,49 +279,78 @@ fun AuthScreen(
                         }
                     }
 
+                    // MESSAGE
+
                     if (message.isNotBlank()) {
                         Text(
-                            message,
-                            color = if (
-                                message.contains("sent", ignoreCase = true)
-                            ) Color(0xFF287A42)
-                            else Color(0xFFB3261E),
+                            text = message,
+                            color = if (messageIsSuccess) {
+                                Color(0xFF287A42)
+                            } else {
+                                Color(0xFFB3261E)
+                            },
                             fontSize = 13.sp
                         )
+
                         Spacer(Modifier.height(8.dp))
                     }
 
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(12.dp))
+
+                    // LOGIN / REGISTER BUTTON
 
                     Button(
                         onClick = {
                             message = ""
+                            messageIsSuccess = false
 
-                            if (email.isBlank() || password.isBlank()) {
-                                message = "Please enter email and password."
-                            } else {
-                                loading = true
+                            val cleanEmail = email.trim()
 
-                                val task = if (isRegister) {
-                                    auth.createUserWithEmailAndPassword(
-                                        email.trim(),
-                                        password
-                                    )
-                                } else {
-                                    auth.signInWithEmailAndPassword(
-                                        email.trim(),
-                                        password
-                                    )
+                            when {
+                                cleanEmail.isBlank() -> {
+                                    message = "Please enter your email."
                                 }
 
-                                task.addOnCompleteListener { result ->
-                                    loading = false
+                                !Patterns.EMAIL_ADDRESS
+                                    .matcher(cleanEmail)
+                                    .matches() -> {
+                                    message = "Enter a valid email address."
+                                }
 
-                                    if (result.isSuccessful) {
-                                        onAuthenticated()
+                                password.isBlank() -> {
+                                    message = "Please enter your password."
+                                }
+
+                                isRegister && password.length < 6 -> {
+                                    message =
+                                        "Password must contain at least 6 characters."
+                                }
+
+                                else -> {
+                                    loading = true
+
+                                    val task = if (isRegister) {
+                                        auth.createUserWithEmailAndPassword(
+                                            cleanEmail,
+                                            password
+                                        )
                                     } else {
-                                        message = result.exception?.localizedMessage
-                                            ?: "Authentication failed."
+                                        auth.signInWithEmailAndPassword(
+                                            cleanEmail,
+                                            password
+                                        )
+                                    }
+
+                                    task.addOnCompleteListener { result ->
+                                        loading = false
+
+                                        if (result.isSuccessful) {
+                                            onAuthenticated()
+                                        } else {
+                                            message =
+                                                result.exception?.localizedMessage
+                                                    ?: "Authentication failed."
+                                        }
                                     }
                                 }
                             }
@@ -314,7 +372,8 @@ fun AuthScreen(
                             )
                         } else {
                             Text(
-                                if (isRegister) "Create Account" else "➜  Login",
+                                if (isRegister) "Create Account"
+                                else "➜  Login",
                                 fontSize = 19.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -324,9 +383,13 @@ fun AuthScreen(
 
                     Spacer(Modifier.height(18.dp))
 
-                    HorizontalDivider(color = Color(0xFFE6DDF1))
+                    HorizontalDivider(
+                        color = Color(0xFFE6DDF1)
+                    )
 
                     Spacer(Modifier.height(18.dp))
+
+                    // SWITCH LOGIN / REGISTER
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -334,16 +397,21 @@ fun AuthScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            if (isRegister) "Already have an account?"
-                            else "Don't have an account?",
+                            if (isRegister)
+                                "Already have an account?"
+                            else
+                                "Don't have an account?",
                             color = Color(0xFF77669A),
                             fontSize = 13.sp
                         )
 
                         TextButton(
+                            enabled = !loading,
                             onClick = {
                                 isRegister = !isRegister
                                 message = ""
+                                messageIsSuccess = false
+                                password = ""
                             }
                         ) {
                             Text(
@@ -367,4 +435,3 @@ fun AuthScreen(
         }
     }
 }
-
