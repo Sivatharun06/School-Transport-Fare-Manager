@@ -1,4 +1,3 @@
-
 package com.schooltransport.faremanager
 
 import com.google.firebase.auth.FirebaseAuth
@@ -12,9 +11,39 @@ class TransportRepository {
 
     private fun userCollection(name: String) =
         db.collection("users")
-            .document(auth.currentUser?.uid
-                ?: throw IllegalStateException("Please login"))
+            .document(
+                auth.currentUser?.uid
+                    ?: throw IllegalStateException("Please login")
+            )
             .collection(name)
+
+    // FARE PLANS
+
+    suspend fun getFarePlans(): List<FarePlan> {
+        return userCollection("farePlans")
+            .get().await()
+            .documents.mapNotNull {
+                it.toObject(FarePlan::class.java)?.copy(id = it.id)
+            }
+    }
+
+    suspend fun saveFarePlan(plan: FarePlan) {
+        val ref = userCollection("farePlans")
+
+        if (plan.id.isBlank()) {
+            val doc = ref.document()
+            doc.set(plan.copy(id = doc.id)).await()
+        } else {
+            ref.document(plan.id).set(plan).await()
+        }
+    }
+
+    suspend fun deleteFarePlan(id: String) {
+        userCollection("farePlans")
+            .document(id)
+            .delete()
+            .await()
+    }
 
     // CHILDREN
 
@@ -22,13 +51,13 @@ class TransportRepository {
         return userCollection("children")
             .get().await()
             .documents.mapNotNull {
-                it.toObject(TransportChild::class.java)
-                    ?.copy(id = it.id)
+                it.toObject(TransportChild::class.java)?.copy(id = it.id)
             }
     }
 
     suspend fun saveChild(child: TransportChild) {
         val ref = userCollection("children")
+
         if (child.id.isBlank()) {
             val doc = ref.document()
             doc.set(child.copy(id = doc.id)).await()
@@ -38,7 +67,10 @@ class TransportRepository {
     }
 
     suspend fun deleteChild(id: String) {
-        userCollection("children").document(id).delete().await()
+        userCollection("children")
+            .document(id)
+            .delete()
+            .await()
     }
 
     // TRIPS
@@ -47,13 +79,13 @@ class TransportRepository {
         return userCollection("trips")
             .get().await()
             .documents.mapNotNull {
-                it.toObject(TransportTrip::class.java)
-                    ?.copy(id = it.id)
+                it.toObject(TransportTrip::class.java)?.copy(id = it.id)
             }
     }
 
     suspend fun saveTrip(trip: TransportTrip) {
         val ref = userCollection("trips")
+
         if (trip.id.isBlank()) {
             val doc = ref.document()
             doc.set(trip.copy(id = doc.id)).await()
@@ -63,7 +95,10 @@ class TransportRepository {
     }
 
     suspend fun deleteTrip(id: String) {
-        userCollection("trips").document(id).delete().await()
+        userCollection("trips")
+            .document(id)
+            .delete()
+            .await()
     }
 
     // PAYMENTS
@@ -72,13 +107,13 @@ class TransportRepository {
         return userCollection("payments")
             .get().await()
             .documents.mapNotNull {
-                it.toObject(TransportPayment::class.java)
-                    ?.copy(id = it.id)
+                it.toObject(TransportPayment::class.java)?.copy(id = it.id)
             }
     }
 
     suspend fun savePayment(payment: TransportPayment) {
         val ref = userCollection("payments")
+
         if (payment.id.isBlank()) {
             val doc = ref.document()
             doc.set(payment.copy(id = doc.id)).await()
@@ -88,6 +123,9 @@ class TransportRepository {
     }
 
     suspend fun deletePayment(id: String) {
-        userCollection("payments").document(id).delete().await()
+        userCollection("payments")
+            .document(id)
+            .delete()
+            .await()
     }
 }
