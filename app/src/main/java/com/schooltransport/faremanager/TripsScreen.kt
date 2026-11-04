@@ -28,6 +28,7 @@ fun TripsScreen(store: TransportStore) {
 
     var showDialog by remember { mutableStateOf(false) }
     var editingTrip by remember { mutableStateOf<TransportTrip?>(null) }
+    var tripToDelete by remember { mutableStateOf<TransportTrip?>(null) }
 
     LaunchedEffect(Unit) {
         store.loadAll()
@@ -38,17 +39,20 @@ fun TripsScreen(store: TransportStore) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             Column {
                 Text(
                     "Trips",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
+
                 Text("${store.trips.size} trip records")
             }
 
@@ -59,8 +63,13 @@ fun TripsScreen(store: TransportStore) {
                 },
                 enabled = store.children.isNotEmpty()
             ) {
-                Icon(Icons.Default.Add, contentDescription = null)
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null
+                )
+
                 Spacer(Modifier.width(4.dp))
+
                 Text("Add Trip")
             }
         }
@@ -74,29 +83,42 @@ fun TripsScreen(store: TransportStore) {
             )
         }
 
+        store.successMessage?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
         if (store.children.isEmpty()) {
             Text("Add a child first to create a trip.")
         }
 
         if (store.isLoading && store.trips.isEmpty()) {
+
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
+
         } else if (store.trips.isEmpty()) {
+
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Text("No trip records yet.")
             }
+
         } else {
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
+
                 items(
                     items = store.trips,
                     key = { it.id }
@@ -106,15 +128,18 @@ fun TripsScreen(store: TransportStore) {
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp)
                     ) {
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+
                             Column(
                                 modifier = Modifier.weight(1f)
                             ) {
+
                                 Text(
                                     trip.childName,
                                     style = MaterialTheme.typography.titleMedium,
@@ -127,7 +152,8 @@ fun TripsScreen(store: TransportStore) {
                                     Text("Time: ${trip.time}")
                                 }
 
-                                if (trip.fromLocation.isNotBlank() ||
+                                if (
+                                    trip.fromLocation.isNotBlank() ||
                                     trip.toLocation.isNotBlank()
                                 ) {
                                     Text(
@@ -136,11 +162,15 @@ fun TripsScreen(store: TransportStore) {
                                 }
 
                                 Text(
-                                    "Morning: ${if (trip.morningDone) "Done" else "Not done"}"
+                                    "Morning: ${
+                                        if (trip.morningDone) "Done" else "Not done"
+                                    }"
                                 )
 
                                 Text(
-                                    "Return: ${if (trip.returnDone) "Done" else "Not done"}"
+                                    "Return: ${
+                                        if (trip.returnDone) "Done" else "Not done"
+                                    }"
                                 )
 
                                 Text(
@@ -163,6 +193,7 @@ fun TripsScreen(store: TransportStore) {
                             }
 
                             Column {
+
                                 IconButton(
                                     onClick = {
                                         editingTrip = trip
@@ -177,7 +208,7 @@ fun TripsScreen(store: TransportStore) {
 
                                 IconButton(
                                     onClick = {
-                                        store.deleteTrip(trip.id)
+                                        tripToDelete = trip
                                     }
                                 ) {
                                     Icon(
@@ -194,7 +225,10 @@ fun TripsScreen(store: TransportStore) {
         }
     }
 
+    // ADD / EDIT DIALOG
+
     if (showDialog) {
+
         TripFormDialog(
             children = store.children,
             existingTrip = editingTrip,
@@ -209,7 +243,50 @@ fun TripsScreen(store: TransportStore) {
             }
         )
     }
+
+    // DELETE CONFIRMATION
+
+    tripToDelete?.let { trip ->
+
+        AlertDialog(
+            onDismissRequest = {
+                tripToDelete = null
+            },
+            title = {
+                Text("Delete Trip?")
+            },
+            text = {
+                Text(
+                    "Delete ${trip.childName}'s trip on ${trip.date}?"
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        store.deleteTrip(trip.id)
+                        tripToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        tripToDelete = null
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+
+// TRIP FORM DIALOG
 
 @Composable
 private fun TripFormDialog(
@@ -252,6 +329,9 @@ private fun TripFormDialog(
     var fromLocation by remember(existingTrip, children) {
         mutableStateOf(
             existingTrip?.fromLocation
+                ?: children.firstOrNull {
+                    it.id == existingTrip?.childId
+                }?.fromLocation
                 ?: children.firstOrNull()?.fromLocation.orEmpty()
         )
     }
@@ -259,6 +339,9 @@ private fun TripFormDialog(
     var toLocation by remember(existingTrip, children) {
         mutableStateOf(
             existingTrip?.toLocation
+                ?: children.firstOrNull {
+                    it.id == existingTrip?.childId
+                }?.toLocation
                 ?: children.firstOrNull()?.toLocation.orEmpty()
         )
     }
@@ -274,6 +357,9 @@ private fun TripFormDialog(
     var morningFare by remember(existingTrip, children) {
         mutableStateOf(
             existingTrip?.morningFare?.toString()
+                ?: children.firstOrNull {
+                    it.id == existingTrip?.childId
+                }?.morningFare?.toString()
                 ?: children.firstOrNull()?.morningFare?.toString()
                 ?: "400"
         )
@@ -282,6 +368,9 @@ private fun TripFormDialog(
     var returnFare by remember(existingTrip, children) {
         mutableStateOf(
             existingTrip?.returnFare?.toString()
+                ?: children.firstOrNull {
+                    it.id == existingTrip?.childId
+                }?.returnFare?.toString()
                 ?: children.firstOrNull()?.returnFare?.toString()
                 ?: "400"
         )
@@ -301,13 +390,16 @@ private fun TripFormDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+
         title = {
             Text(
                 if (existingTrip == null) "Add Trip"
                 else "Edit Trip"
             )
         },
+
         text = {
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -315,6 +407,8 @@ private fun TripFormDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
+                // CHILD SELECTION
 
                 OutlinedButton(
                     onClick = {
@@ -325,75 +419,119 @@ private fun TripFormDialog(
                     Text(selectedChild?.name ?: "Select Child")
                 }
 
+                // DATE
+
                 OutlinedTextField(
                     value = date,
-                    onValueChange = { date = it },
-                    label = { Text("Date (YYYY-MM-DD)") },
+                    onValueChange = {
+                        date = it
+                        error = ""
+                    },
+                    label = {
+                        Text("Date (YYYY-MM-DD)")
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // TIME
 
                 OutlinedTextField(
                     value = time,
-                    onValueChange = { time = it },
-                    label = { Text("Time (HH:mm)") },
+                    onValueChange = {
+                        time = it
+                        error = ""
+                    },
+                    label = {
+                        Text("Time (HH:mm)")
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // ROUTE
+
                 OutlinedTextField(
                     value = fromLocation,
-                    onValueChange = { fromLocation = it },
-                    label = { Text("From") },
+                    onValueChange = {
+                        fromLocation = it
+                    },
+                    label = {
+                        Text("From")
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
                     value = toLocation,
-                    onValueChange = { toLocation = it },
-                    label = { Text("To") },
+                    onValueChange = {
+                        toLocation = it
+                    },
+                    label = {
+                        Text("To")
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 HorizontalDivider()
 
+                // MORNING
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = morningDone,
-                        onCheckedChange = { morningDone = it }
+                        onCheckedChange = {
+                            morningDone = it
+                        }
                     )
+
                     Text("Morning completed")
                 }
 
                 OutlinedTextField(
                     value = morningFare,
-                    onValueChange = { morningFare = it },
-                    label = { Text("Morning fare (Rs.)") },
+                    onValueChange = {
+                        morningFare = it
+                        error = ""
+                    },
+                    label = {
+                        Text("Morning fare (Rs.)")
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
                     ),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // RETURN
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = returnDone,
-                        onCheckedChange = { returnDone = it }
+                        onCheckedChange = {
+                            returnDone = it
+                        }
                     )
+
                     Text("Return completed")
                 }
 
                 OutlinedTextField(
                     value = returnFare,
-                    onValueChange = { returnFare = it },
-                    label = { Text("Return fare (Rs.)") },
+                    onValueChange = {
+                        returnFare = it
+                        error = ""
+                    },
+                    label = {
+                        Text("Return fare (Rs.)")
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
                     ),
@@ -401,10 +539,16 @@ private fun TripFormDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // NOTE
+
                 OutlinedTextField(
                     value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Note (Optional)") },
+                    onValueChange = {
+                        note = it
+                    },
+                    label = {
+                        Text("Note (Optional)")
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -416,7 +560,9 @@ private fun TripFormDialog(
                 }
             }
         },
+
         confirmButton = {
+
             Button(
                 onClick = {
 
@@ -424,6 +570,7 @@ private fun TripFormDialog(
                     val returning = returnFare.toDoubleOrNull()
 
                     when {
+
                         selectedChild == null ->
                             error = "Select a child"
 
@@ -435,8 +582,12 @@ private fun TripFormDialog(
                         ) ->
                             error = "Enter time as HH:mm"
 
-                        morning == null || returning == null ||
-                            morning < 0 || returning < 0 ->
+                        morning == null ||
+                            returning == null ||
+                            !morning.isFinite() ||
+                            !returning.isFinite() ||
+                            morning < 0 ||
+                            returning < 0 ->
                             error = "Enter valid fare amounts"
 
                         !morningDone && !returnDone ->
@@ -471,6 +622,7 @@ private fun TripFormDialog(
                 Text("Save Trip")
             }
         },
+
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
@@ -478,32 +630,45 @@ private fun TripFormDialog(
         }
     )
 
+    // CHILD PICKER
+
     if (showChildPicker) {
+
         AlertDialog(
             onDismissRequest = {
                 showChildPicker = false
             },
+
             title = {
                 Text("Select Child")
             },
+
             text = {
+
                 Column(
                     modifier = Modifier
                         .heightIn(max = 300.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+
                     children.forEach { child ->
 
                         TextButton(
                             onClick = {
-                                selectedChild = child
-                                fromLocation = child.fromLocation
-                                toLocation = child.toLocation
 
-                                // New child selection uses current plan fares.
-                                // Editing the same child does not overwrite
-                                // the existing trip's fare snapshot.
-                                if (child.id != existingTrip?.childId) {
+                                val isSameChild =
+                                    child.id == existingTrip?.childId
+
+                                selectedChild = child
+
+                                // Same child: preserve historical route and fares.
+                                // Different child: use selected child's current details.
+
+                                if (!isSameChild) {
+
+                                    fromLocation = child.fromLocation
+                                    toLocation = child.toLocation
+
                                     morningFare =
                                         child.morningFare.toString()
 
@@ -521,6 +686,7 @@ private fun TripFormDialog(
                     }
                 }
             },
+
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -534,15 +700,25 @@ private fun TripFormDialog(
     }
 }
 
+// DATE VALIDATION
+
 private fun isValidTripDate(value: String): Boolean {
+
     if (!value.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$"))) {
         return false
     }
 
     return try {
-        val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+        val format = SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.US
+        )
+
         format.isLenient = false
+
         format.parse(value) != null
+
     } catch (_: Exception) {
         false
     }
