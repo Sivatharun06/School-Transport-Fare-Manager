@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -37,23 +37,56 @@ private val Gold = Color(0xFFFFC857)
 
 @Composable
 fun SchoolTransportApp() {
-    var showLogin by remember { mutableStateOf(false) }
+
+    val auth = remember {
+        FirebaseAuth.getInstance()
+    }
+
     var isAuthenticated by remember {
-        mutableStateOf(FirebaseAuth.getInstance().currentUser != null)
+        mutableStateOf(auth.currentUser != null)
+    }
+
+    var showLogin by remember {
+        mutableStateOf(false)
+    }
+
+    // Listen for Firebase authentication changes.
+
+    DisposableEffect(auth) {
+
+        val authListener =
+            FirebaseAuth.AuthStateListener { firebaseAuth ->
+
+                isAuthenticated =
+                    firebaseAuth.currentUser != null
+
+                if (firebaseAuth.currentUser == null) {
+                    showLogin = false
+                }
+            }
+
+        auth.addAuthStateListener(authListener)
+
+        onDispose {
+            auth.removeAuthStateListener(authListener)
+        }
     }
 
     when {
+
         isAuthenticated -> {
-            DashboardScreen(
-                onLogout = {
-                    FirebaseAuth.getInstance().signOut()
-                    isAuthenticated = false
-                    showLogin = false
-                }
-            )
+
+            key(auth.currentUser?.uid) {
+                DashboardScreen(
+                    onLogout = {
+                        auth.signOut()
+                    }
+                )
+            }
         }
 
         showLogin -> {
+
             AuthScreen(
                 onAuthenticated = {
                     isAuthenticated = true
@@ -62,30 +95,46 @@ fun SchoolTransportApp() {
         }
 
         else -> {
-            SplashScreen {
-                showLogin = true
-            }
+
+            SplashScreen(
+                onGetStarted = {
+                    showLogin = true
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun SplashScreen(onGetStarted: () -> Unit) {
+private fun SplashScreen(
+    onGetStarted: () -> Unit
+) {
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    listOf(DeepPurple, Purple, DeepPurple)
+                    listOf(
+                        DeepPurple,
+                        Purple,
+                        DeepPurple
+                    )
                 )
             ),
         contentAlignment = Alignment.Center
     ) {
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(24.dp)
         ) {
-            Text("🚌", fontSize = 76.sp)
+
+            Text(
+                "🚌",
+                fontSize = 76.sp
+            )
+
             Spacer(Modifier.height(20.dp))
 
             Text(
@@ -120,7 +169,10 @@ private fun SplashScreen(onGetStarted: () -> Unit) {
                     contentColor = DeepPurple
                 )
             ) {
-                Text("Get Started", fontWeight = FontWeight.Bold)
+                Text(
+                    "Get Started",
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(Modifier.height(24.dp))
