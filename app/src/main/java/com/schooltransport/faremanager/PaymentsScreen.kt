@@ -80,6 +80,8 @@ fun PaymentsScreen(store: TransportStore) {
 
         Spacer(Modifier.height(12.dp))
 
+        // MONTH SELECTOR
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -140,6 +142,7 @@ fun PaymentsScreen(store: TransportStore) {
                 )
 
                 PaymentSummaryRow("Total Fare", summary.totalFare)
+
                 PaymentSummaryRow("Paid Amount", summary.paidAmount)
 
                 HorizontalDivider()
@@ -150,10 +153,10 @@ fun PaymentsScreen(store: TransportStore) {
                     bold = true
                 )
 
-                if (summary.overpaid > 0) {
+                if (summary.overpaidAmount > 0) {
                     PaymentSummaryRow(
                         "Overpaid",
-                        summary.overpaid,
+                        summary.overpaidAmount,
                         bold = true
                     )
                 }
@@ -167,7 +170,7 @@ fun PaymentsScreen(store: TransportStore) {
 
         Spacer(Modifier.height(14.dp))
 
-        // CHILD-WISE MONTHLY SUMMARY
+        // CHILD-WISE SUMMARY
 
         Text(
             "Child-wise Summary",
@@ -219,10 +222,10 @@ fun PaymentsScreen(store: TransportStore) {
                             bold = true
                         )
 
-                        if (childSummary.overpaid > 0) {
+                        if (childSummary.overpaidAmount > 0) {
                             PaymentSummaryRow(
                                 "Overpaid",
-                                childSummary.overpaid,
+                                childSummary.overpaidAmount,
                                 bold = true
                             )
                         }
@@ -256,7 +259,9 @@ fun PaymentsScreen(store: TransportStore) {
                     Icons.Default.Add,
                     contentDescription = null
                 )
+
                 Spacer(Modifier.width(4.dp))
+
                 Text("Add Payment")
             }
         }
@@ -278,19 +283,25 @@ fun PaymentsScreen(store: TransportStore) {
         }
 
         if (store.isLoading && store.payments.isEmpty()) {
+
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
+
         } else if (monthlyPayments.isEmpty()) {
+
             Text("No payments recorded for this month.")
+
         } else {
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
+
                 items(
                     items = monthlyPayments,
                     key = { it.id }
@@ -306,9 +317,11 @@ fun PaymentsScreen(store: TransportStore) {
                                 .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+
                             Column(
                                 modifier = Modifier.weight(1f)
                             ) {
+
                                 Text(
                                     payment.childName,
                                     fontWeight = FontWeight.Bold,
@@ -352,7 +365,10 @@ fun PaymentsScreen(store: TransportStore) {
         }
     }
 
+    // ADD PAYMENT DIALOG
+
     if (showPaymentDialog) {
+
         AddPaymentDialog(
             children = store.children,
             defaultMonth = monthKey,
@@ -366,7 +382,10 @@ fun PaymentsScreen(store: TransportStore) {
         )
     }
 
+    // DELETE CONFIRMATION
+
     paymentToDelete?.let { payment ->
+
         AlertDialog(
             onDismissRequest = {
                 paymentToDelete = null
@@ -376,7 +395,7 @@ fun PaymentsScreen(store: TransportStore) {
             },
             text = {
                 Text(
-                    "Delete Rs. ${payment.amount} payment from ${payment.childName}?"
+                    "Delete Rs. ${"%.2f".format(Locale.US, payment.amount)} payment from ${payment.childName}?"
                 )
             },
             confirmButton = {
@@ -404,6 +423,8 @@ fun PaymentsScreen(store: TransportStore) {
         )
     }
 }
+
+// PAYMENT SUMMARY ROW
 
 @Composable
 private fun PaymentSummaryRow(
@@ -435,6 +456,8 @@ private fun PaymentSummaryRow(
     }
 }
 
+// ADD PAYMENT DIALOG
+
 @Composable
 private fun AddPaymentDialog(
     children: List<TransportChild>,
@@ -452,16 +475,19 @@ private fun AddPaymentDialog(
     }
 
     val initialDate = remember(defaultMonth) {
+
         val currentMonth = SimpleDateFormat(
             "yyyy-MM",
             Locale.US
         ).format(Calendar.getInstance().time)
 
         if (defaultMonth == currentMonth) {
+
             SimpleDateFormat(
                 "yyyy-MM-dd",
                 Locale.US
             ).format(Calendar.getInstance().time)
+
         } else {
             "$defaultMonth-01"
         }
@@ -485,10 +511,13 @@ private fun AddPaymentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+
         title = {
             Text("Add Payment")
         },
+
         text = {
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -510,8 +539,13 @@ private fun AddPaymentDialog(
 
                 OutlinedTextField(
                     value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount (Rs.)") },
+                    onValueChange = {
+                        amount = it
+                        error = ""
+                    },
+                    label = {
+                        Text("Amount (Rs.)")
+                    },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal
@@ -521,7 +555,10 @@ private fun AddPaymentDialog(
 
                 OutlinedTextField(
                     value = paymentDate,
-                    onValueChange = { paymentDate = it },
+                    onValueChange = {
+                        paymentDate = it
+                        error = ""
+                    },
                     label = {
                         Text("Payment Date (YYYY-MM-DD)")
                     },
@@ -531,8 +568,12 @@ private fun AddPaymentDialog(
 
                 OutlinedTextField(
                     value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Note (Optional)") },
+                    onValueChange = {
+                        note = it
+                    },
+                    label = {
+                        Text("Note (Optional)")
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -544,12 +585,16 @@ private fun AddPaymentDialog(
                 }
             }
         },
+
         confirmButton = {
+
             Button(
                 onClick = {
+
                     val parsedAmount = amount.toDoubleOrNull()
 
                     when {
+
                         selectedChild == null ->
                             error = "Select a child"
 
@@ -562,6 +607,7 @@ private fun AddPaymentDialog(
                             error = "Enter a valid date (YYYY-MM-DD)"
 
                         else -> {
+
                             val child = selectedChild!!
 
                             onSave(
@@ -581,28 +627,40 @@ private fun AddPaymentDialog(
                 Text("Save Payment")
             }
         },
+
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+
+            TextButton(
+                onClick = onDismiss
+            ) {
                 Text("Cancel")
             }
         }
     )
 
+    // CHILD SELECTION DIALOG
+
     if (showChildren) {
+
         AlertDialog(
             onDismissRequest = {
                 showChildren = false
             },
+
             title = {
                 Text("Select Child")
             },
+
             text = {
+
                 Column(
                     modifier = Modifier
                         .heightIn(max = 300.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
+
                     children.forEach { child ->
+
                         TextButton(
                             onClick = {
                                 selectedChild = child
@@ -615,7 +673,9 @@ private fun AddPaymentDialog(
                     }
                 }
             },
+
             confirmButton = {
+
                 TextButton(
                     onClick = {
                         showChildren = false
@@ -628,15 +688,24 @@ private fun AddPaymentDialog(
     }
 }
 
+// PAYMENT DATE VALIDATION
+
 private fun isValidPaymentDate(value: String): Boolean {
+
     if (!value.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$"))) {
         return false
     }
 
     return try {
-        val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+
+        val format = SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.US
+        )
+
         format.isLenient = false
         format.parse(value) != null
+
     } catch (_: Exception) {
         false
     }
