@@ -92,7 +92,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Paid")
-                    Text("Rs. ${summary.paid}")
+                    Text("Rs. ${summary.paidAmount}")
                 }
 
                 HorizontalDivider()
@@ -109,6 +109,10 @@ fun HomeScreen(
                         "Rs. ${summary.balance}",
                         style = MaterialTheme.typography.titleMedium
                     )
+                }
+
+                if (summary.overpaidAmount > 0) {
+                    Text("Overpaid: Rs. ${summary.overpaidAmount}")
                 }
             }
         }
@@ -164,7 +168,14 @@ fun HomeScreen(
             }
         }
 
-        store.message?.let { message ->
+        store.errorMessage?.let { message ->
+            Text(
+                message,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        store.successMessage?.let { message ->
             Text(
                 message,
                 color = MaterialTheme.colorScheme.primary
