@@ -21,7 +21,6 @@ fun HomeScreen(
     store: TransportStore,
     onOpenFarePlans: () -> Unit
 ) {
-
     val today = remember { Calendar.getInstance() }
 
     var selectedMonth by remember {
@@ -104,7 +103,6 @@ fun HomeScreen(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 Text(
                     "Monthly Overview",
                     style = MaterialTheme.typography.titleMedium,
@@ -151,15 +149,9 @@ fun HomeScreen(
                     }
                 }
 
-                OverviewRow(
-                    "Total Fare",
-                    summary.totalFare
-                )
+                OverviewRow("Total Fare", summary.totalFare)
 
-                OverviewRow(
-                    "Paid Amount",
-                    summary.paidAmount
-                )
+                OverviewRow("Paid Amount", summary.paidAmount)
 
                 HorizontalDivider()
 
@@ -169,10 +161,10 @@ fun HomeScreen(
                     bold = true
                 )
 
-                if (summary.overpaid > 0) {
+                if (summary.overpaidAmount > 0) {
                     OverviewRow(
                         "Overpaid",
-                        summary.overpaid,
+                        summary.overpaidAmount,
                         bold = true
                     )
                 }
@@ -230,9 +222,7 @@ fun HomeScreen(
                     "Create and manage different morning and return fare plans."
                 )
 
-                Text(
-                    "Available plans: ${store.farePlans.size}"
-                )
+                Text("Available plans: ${store.farePlans.size}")
 
                 Button(
                     onClick = onOpenFarePlans,
