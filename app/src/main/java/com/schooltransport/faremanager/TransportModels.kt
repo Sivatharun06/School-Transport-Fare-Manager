@@ -1,0 +1,43 @@
+
+package com.schooltransport.faremanager
+
+data class TransportChild(
+    val id: String = "",
+    val name: String = "",
+    val parentName: String = "",
+    val phone: String = "",
+    val fromLocation: String = "",
+    val toLocation: String = "",
+    val morningFare: Double = 400.0,
+    val returnFare: Double = 400.0,
+    val isActive: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+data class TransportTrip(
+    val id: String = "",
+    val childId: String = "",
+    val childName: String = "",
+    val date: String = "",
+    val morningDone: Boolean = false,
+    val returnDone: Boolean = false,
+    val morningFare: Double = 400.0,
+    val returnFare: Double = 400.0,
+    val note: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+) {
+    val totalFare: Double
+        get() = (if (morningDone) morningFare else 0.0) +
+                (if (returnDone) returnFare else 0.0)
+}
+
+data class TransportPayment(
+    val id: String = "",
+    val childId: String = "",
+    val childName: String = "",
+    val amount: Double = 0.0,
+    val paymentDate: String = "",
+    val monthKey: String = "",
+    val note: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
