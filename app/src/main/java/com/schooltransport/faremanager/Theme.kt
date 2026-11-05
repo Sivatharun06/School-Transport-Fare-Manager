@@ -1,39 +1,67 @@
 package com.schooltransport.faremanager.ui.theme
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 
-private val Purple = Color(0xFF673AB7)
-private val DeepPurple = Color(0xFF452080)
-private val Gold = Color(0xFFFFC107)
-private val LightBackground = Color(0xFFF8F5FF)
-private val DarkBackground = Color(0xFF17121F)
+// Premium Purple + Gold palette
 
-private val LightColors = lightColorScheme(
-    primary = Purple,
+private val PrimaryPurple = Color(0xFF6033AD)
+private val DeepPurple = Color(0xFF382064)
+private val SoftPurple = Color(0xFFF0E9FC)
+private val Gold = Color(0xFFFFC928)
+private val DarkGold = Color(0xFF8A6200)
+
+private val AppBackground = Color(0xFFF8F6FC)
+private val CardWhite = Color(0xFFFFFFFF)
+private val MainText = Color(0xFF252033)
+private val SecondaryText = Color(0xFF777184)
+
+private val AppColors = lightColorScheme(
+    primary = PrimaryPurple,
     onPrimary = Color.White,
+
+    primaryContainer = SoftPurple,
+    onPrimaryContainer = DeepPurple,
+
     secondary = Gold,
     onSecondary = Color(0xFF302000),
-    background = LightBackground,
-    onBackground = Color(0xFF211B2B),
-    surface = Color.White,
-    onSurface = Color(0xFF211B2B),
-    error = Color(0xFFBA1A1A)
+
+    secondaryContainer = Color(0xFFFFF3C9),
+    onSecondaryContainer = DarkGold,
+
+    tertiary = Color(0xFF3B805A),
+    onTertiary = Color.White,
+
+    background = AppBackground,
+    onBackground = MainText,
+
+    surface = CardWhite,
+    onSurface = MainText,
+
+    surfaceVariant = Color(0xFFF0ECF6),
+    onSurfaceVariant = SecondaryText,
+
+    outline = Color(0xFFE2DCEA),
+    outlineVariant = Color(0xFFECE7F2),
+
+    error = Color(0xFFB3261E),
+    onError = Color.White
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Color(0xFFB69CFF),
-    onPrimary = Color(0xFF30116B),
-    secondary = Gold,
-    onSecondary = Color(0xFF302000),
-    background = DarkBackground,
-    onBackground = Color(0xFFF0E8FF),
-    surface = Color(0xFF241D30),
-    onSurface = Color(0xFFF0E8FF),
-    error = Color(0xFFFFB4AB)
+private val AppTypography = Typography()
+
+private val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(28.dp)
 )
 
 @Composable
@@ -41,9 +69,11 @@ fun SchoolTransportTheme(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    // Initial release uses Light Mode only.
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = MaterialTheme.typography,
+        colorScheme = AppColors,
+        typography = AppTypography,
+        shapes = AppShapes,
         content = content
     )
 }
