@@ -1,24 +1,34 @@
 
 package com.schooltransport.faremanager
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+
+private val FarePurple = Color(0xFF6033AD)
+private val FareDeepPurple = Color(0xFF382064)
+private val FareSoftPurple = Color(0xFFF0E9FC)
+private val FareGold = Color(0xFFFFC928)
+private val FareBackground = Color(0xFFF8F6FC)
 
 @Composable
 fun FarePlansScreen(store: TransportStore) {
@@ -34,7 +44,8 @@ fun FarePlansScreen(store: TransportStore) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .background(FareBackground)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -45,9 +56,14 @@ fun FarePlansScreen(store: TransportStore) {
                 Text(
                     "Payment Configurations",
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = FareDeepPurple
                 )
-                Text("${store.farePlans.size} payment methods")
+                Text(
+                    "${store.farePlans.size} payment methods",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
 
             Button(
@@ -55,28 +71,50 @@ fun FarePlansScreen(store: TransportStore) {
                     store.clearMessages()
                     editingPlan = null
                     showDialog = true
-                }
+                },
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FarePurple
+                )
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(4.dp))
-                Text("Add")
+                Text("Add", fontWeight = FontWeight.SemiBold)
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         store.errorMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error
-            )
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFEAEA)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    it,
+                    modifier = Modifier.padding(12.dp),
+                    color = Color(0xFFB3261E)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
         }
 
         store.successMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE5F5E9)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    it,
+                    modifier = Modifier.padding(12.dp),
+                    color = Color(0xFF236B43)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
         }
 
         if (store.isLoading && store.farePlans.isEmpty()) {
@@ -84,19 +122,47 @@ fun FarePlansScreen(store: TransportStore) {
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = FarePurple)
             }
         } else if (store.farePlans.isEmpty()) {
             Box(
                 Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No payment configurations yet. Add your first one.")
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(28.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.Payments,
+                            contentDescription = null,
+                            tint = FarePurple,
+                            modifier = Modifier.size(42.dp)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "No payment configurations",
+                            fontWeight = FontWeight.Bold,
+                            color = FareDeepPurple
+                        )
+                        Text(
+                            "Add your first payment configuration.",
+                            color = Color.Gray,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
                 items(
@@ -110,25 +176,50 @@ fun FarePlansScreen(store: TransportStore) {
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 2.dp
+                        )
                     ) {
                         Column(
-                            Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(46.dp)
+                                        .background(
+                                            FareSoftPurple,
+                                            CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Payments,
+                                        contentDescription = null,
+                                        tint = FarePurple
+                                    )
+                                }
+
+                                Spacer(Modifier.width(12.dp))
+
                                 Column(Modifier.weight(1f)) {
                                     Text(
                                         plan.name,
                                         style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = FareDeepPurple
                                     )
-
                                     Text(
                                         "$assignedCount children assigned",
-                                        style = MaterialTheme.typography.bodySmall
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray
                                     )
                                 }
 
@@ -141,7 +232,8 @@ fun FarePlansScreen(store: TransportStore) {
                                 ) {
                                     Icon(
                                         Icons.Default.Edit,
-                                        contentDescription = "Edit"
+                                        contentDescription = "Edit",
+                                        tint = FarePurple
                                     )
                                 }
 
@@ -154,40 +246,50 @@ fun FarePlansScreen(store: TransportStore) {
                                     Icon(
                                         Icons.Default.Delete,
                                         contentDescription = "Delete",
-                                        tint = MaterialTheme.colorScheme.error
+                                        tint = Color(0xFFD94848)
                                     )
                                 }
                             }
 
-                            HorizontalDivider()
+                            HorizontalDivider(color = Color(0xFFEDE8F4))
 
                             Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Text("Morning Trip")
-                                Text(
-                                    "Rs. ${plan.morningFare}",
-                                    fontWeight = FontWeight.Bold
+                                FareAmountCard(
+                                    title = "Morning Trip",
+                                    amount = plan.morningFare
+                                )
+                                FareAmountCard(
+                                    title = "Return Trip",
+                                    amount = plan.returnFare
                                 )
                             }
 
                             Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        FareSoftPurple,
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(13.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Return Trip")
                                 Text(
-                                    "Rs. ${plan.returnFare}",
-                                    fontWeight = FontWeight.Bold
+                                    "Daily Total",
+                                    color = FareDeepPurple,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "Rs. ${plan.morningFare + plan.returnFare}",
+                                    color = FarePurple,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium
                                 )
                             }
-
-                            Text(
-                                "Daily total: Rs. ${plan.morningFare + plan.returnFare}",
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
                         }
                     }
                 }
@@ -220,8 +322,13 @@ fun FarePlansScreen(store: TransportStore) {
             onDismissRequest = {
                 deletingPlan = null
             },
+            shape = RoundedCornerShape(22.dp),
             title = {
-                Text("Delete Payment Configuration?")
+                Text(
+                    "Delete Payment Configuration?",
+                    fontWeight = FontWeight.Bold,
+                    color = FareDeepPurple
+                )
             },
             text = {
                 if (assignedCount > 0) {
@@ -243,16 +350,51 @@ fun FarePlansScreen(store: TransportStore) {
                     },
                     enabled = assignedCount == 0
                 ) {
-                    Text("Delete")
+                    Text(
+                        "Delete",
+                        color = if (assignedCount == 0) {
+                            Color(0xFFD94848)
+                        } else {
+                            Color.Gray
+                        }
+                    )
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { deletingPlan = null }
                 ) {
-                    Text("Cancel")
+                    Text("Cancel", color = FarePurple)
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun FareAmountCard(
+    title: String,
+    amount: Double
+) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .background(
+                Color(0xFFFFF8E5),
+                RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp)
+    ) {
+        Text(
+            title,
+            color = Color.Gray,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(Modifier.height(5.dp))
+        Text(
+            "Rs. $amount",
+            color = FareDeepPurple,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -282,13 +424,16 @@ private fun FarePlanDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(22.dp),
         title = {
             Text(
                 if (existingPlan == null) {
                     "Add Payment Configuration"
                 } else {
                     "Edit Payment Configuration"
-                }
+                },
+                fontWeight = FontWeight.Bold,
+                color = FareDeepPurple
             )
         },
         text = {
@@ -307,7 +452,8 @@ private fun FarePlanDialog(
                     },
                     label = { Text("Payment Method Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
@@ -323,7 +469,8 @@ private fun FarePlanDialog(
                         keyboardType = KeyboardType.Decimal
                     ),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
@@ -339,7 +486,8 @@ private fun FarePlanDialog(
                         keyboardType = KeyboardType.Decimal
                     ),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 if (error.isNotBlank()) {
@@ -360,7 +508,8 @@ private fun FarePlanDialog(
                         name.isBlank() ->
                             error = "Enter a payment method name"
 
-                        morning == null || returning == null ->
+                        morning == null || returning == null ||
+                            !morning.isFinite() || !returning.isFinite() ->
                             error = "Enter valid fare amounts"
 
                         morning < 0 || returning < 0 ->
@@ -379,14 +528,18 @@ private fun FarePlanDialog(
                             )
                         }
                     }
-                }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = FarePurple
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", color = FarePurple)
             }
         }
     )
