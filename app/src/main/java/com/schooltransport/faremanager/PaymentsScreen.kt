@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,8 +40,16 @@ fun PaymentsScreen(store: TransportStore) {
         mutableStateOf(false)
     }
 
+    var paymentToEdit by remember {
+        mutableStateOf<TransportPayment?>(null)
+    }
+
     var paymentToDelete by remember {
         mutableStateOf<TransportPayment?>(null)
+    }
+
+    var showHistory by remember {
+        mutableStateOf(false)
     }
 
     val monthKey = remember(month, year) {
@@ -66,302 +75,415 @@ fun PaymentsScreen(store: TransportStore) {
         .filter { it.monthKey == monthKey }
         .sortedByDescending { it.paymentDate }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text(
-            "Payments",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+    val allPayments = store.payments
+        .sortedWith(
+            compareByDescending<TransportPayment> { it.paymentDate }
+                .thenByDescending { it.createdAt }
         )
 
-        Spacer(Modifier.height(12.dp))
+    // PAYMENT HISTORY PAGE
 
-        // MONTH SELECTOR
+    if (showHistory) {
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
         ) {
-            TextButton(
-                onClick = {
-                    val c = Calendar.getInstance().apply {
-                        set(year, month, 1)
-                        add(Calendar.MONTH, -1)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                TextButton(
+                    onClick = {
+                        showHistory = false
                     }
-                    month = c.get(Calendar.MONTH)
-                    year = c.get(Calendar.YEAR)
+                ) {
+                    Text("‹ Back")
                 }
-            ) {
-                Text("‹ Previous")
-            }
 
-            Text(
-                monthName,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+                Spacer(Modifier.width(8.dp))
 
-            TextButton(
-                onClick = {
-                    val c = Calendar.getInstance().apply {
-                        set(year, month, 1)
-                        add(Calendar.MONTH, 1)
-                    }
-                    month = c.get(Calendar.MONTH)
-                    year = c.get(Calendar.YEAR)
-                }
-            ) {
-                Text("Next ›")
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        // MONTHLY SUMMARY
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
                 Text(
-                    "Monthly Summary",
-                    style = MaterialTheme.typography.titleMedium,
+                    "Payment History",
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
+            }
 
-                PaymentSummaryRow("Total Fare", summary.totalFare)
+            Spacer(Modifier.height(12.dp))
 
-                PaymentSummaryRow("Paid Amount", summary.paidAmount)
-
-                HorizontalDivider()
-
-                PaymentSummaryRow(
-                    "Balance",
-                    summary.balance,
-                    bold = true
-                )
-
-                if (summary.overpaidAmount > 0) {
-                    PaymentSummaryRow(
-                        "Overpaid",
-                        summary.overpaidAmount,
-                        bold = true
-                    )
-                }
-
+            store.errorMessage?.let {
                 Text(
-                    "${summary.tripCount} attendance records",
-                    style = MaterialTheme.typography.labelMedium
+                    it,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
-        }
 
-        Spacer(Modifier.height(14.dp))
-
-        // CHILD-WISE SUMMARY
-
-        Text(
-            "Child-wise Summary",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        if (store.children.isEmpty()) {
-            Text("No children registered.")
-        } else {
-            store.children.forEach { child ->
-
-                val childSummary = store.childMonthlySummary(
-                    child.id,
-                    monthKey
+            store.successMessage?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.primary
                 )
+            }
 
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                    shape = RoundedCornerShape(12.dp)
+            if (store.isLoading && allPayments.isEmpty()) {
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Text(
-                            child.name,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleSmall
-                        )
+                    CircularProgressIndicator()
+                }
 
-                        PaymentSummaryRow(
-                            "Total Fare",
-                            childSummary.totalFare
-                        )
+            } else if (allPayments.isEmpty()) {
 
-                        PaymentSummaryRow(
-                            "Paid",
-                            childSummary.paidAmount
-                        )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No payments recorded yet.")
+                }
 
-                        PaymentSummaryRow(
-                            "Balance",
-                            childSummary.balance,
-                            bold = true
-                        )
+            } else {
 
-                        if (childSummary.overpaidAmount > 0) {
-                            PaymentSummaryRow(
-                                "Overpaid",
-                                childSummary.overpaidAmount,
-                                bold = true
-                            )
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+
+                    items(
+                        items = allPayments,
+                        key = { it.id }
+                    ) { payment ->
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+
+                                    Text(
+                                        payment.childName,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+
+                                    Text(
+                                        "Date: ${payment.paymentDate}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+
+                                    if (payment.note.isNotBlank()) {
+                                        Text(
+                                            payment.note,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+
+                                    Text(
+                                        "Rs. ${"%.2f".format(Locale.US, payment.amount)}",
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+
+                                    IconButton(
+                                        onClick = {
+                                            paymentToEdit = payment
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = "Edit payment"
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            paymentToDelete = payment
+                                        }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Delete payment",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        Spacer(Modifier.height(8.dp))
+    } else {
 
-        // PAYMENT HISTORY
+        // MAIN PAYMENT PAGE
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
         ) {
+
+            // MONTH SELECTOR - UNCHANGED
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                TextButton(
+                    onClick = {
+                        val c = Calendar.getInstance().apply {
+                            set(year, month, 1)
+                            add(Calendar.MONTH, -1)
+                        }
+                        month = c.get(Calendar.MONTH)
+                        year = c.get(Calendar.YEAR)
+                    }
+                ) {
+                    Text("‹ Previous")
+                }
+
+                Text(
+                    monthName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                TextButton(
+                    onClick = {
+                        val c = Calendar.getInstance().apply {
+                            set(year, month, 1)
+                            add(Calendar.MONTH, 1)
+                        }
+                        month = c.get(Calendar.MONTH)
+                        year = c.get(Calendar.YEAR)
+                    }
+                ) {
+                    Text("Next ›")
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            // PAYMENT HISTORY + ADD PAYMENT BUTTONS
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                OutlinedButton(
+                    onClick = {
+                        showHistory = true
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(
+                        horizontal = 6.dp,
+                        vertical = 12.dp
+                    )
+                ) {
+                    Text(
+                        "Payment History",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        showPaymentDialog = true
+                    },
+                    enabled = store.children.isNotEmpty(),
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(
+                        horizontal = 6.dp,
+                        vertical = 12.dp
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null
+                    )
+
+                    Spacer(Modifier.width(4.dp))
+
+                    Text(
+                        "Add Payment",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            // MONTHLY SUMMARY
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+
+                    Text(
+                        "Monthly Summary",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    PaymentSummaryRow(
+                        "Total Fare",
+                        summary.totalFare
+                    )
+
+                    PaymentSummaryRow(
+                        "Paid Amount",
+                        summary.paidAmount
+                    )
+
+                    HorizontalDivider()
+
+                    PaymentSummaryRow(
+                        "Balance",
+                        summary.balance,
+                        bold = true
+                    )
+
+                    if (summary.overpaidAmount > 0) {
+                        PaymentSummaryRow(
+                            "Overpaid",
+                            summary.overpaidAmount,
+                            bold = true
+                        )
+                    }
+
+                    Text(
+                        "${summary.tripCount} attendance records",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            // CHILD-WISE SUMMARY
+
             Text(
-                "Payment History",
+                "Child-wise Summary",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            Button(
-                onClick = {
-                    showPaymentDialog = true
-                },
-                enabled = store.children.isNotEmpty()
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = null
-                )
+            Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.width(4.dp))
+            if (store.children.isEmpty()) {
 
-                Text("Add Payment")
-            }
-        }
+                Text("No children registered.")
 
-        Spacer(Modifier.height(8.dp))
+            } else {
 
-        store.errorMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
+                store.children.forEach { child ->
 
-        store.successMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-
-        if (store.isLoading && store.payments.isEmpty()) {
-
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-
-        } else if (monthlyPayments.isEmpty()) {
-
-            Text("No payments recorded for this month.")
-
-        } else {
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
-            ) {
-
-                items(
-                    items = monthlyPayments,
-                    key = { it.id }
-                ) { payment ->
+                    val childSummary = store.childMonthlySummary(
+                        child.id,
+                        monthKey
+                    )
 
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
 
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
+                            Text(
+                                child.name,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall
+                            )
 
-                                Text(
-                                    payment.childName,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
+                            PaymentSummaryRow(
+                                "Total Fare",
+                                childSummary.totalFare
+                            )
 
-                                Text(
-                                    "Date: ${payment.paymentDate}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                            PaymentSummaryRow(
+                                "Paid",
+                                childSummary.paidAmount
+                            )
 
-                                if (payment.note.isNotBlank()) {
-                                    Text(
-                                        payment.note,
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
+                            PaymentSummaryRow(
+                                "Balance",
+                                childSummary.balance,
+                                bold = true
+                            )
 
-                                Text(
-                                    "Rs. ${"%.2f".format(Locale.US, payment.amount)}",
-                                    color = MaterialTheme.colorScheme.primary,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    paymentToDelete = payment
-                                }
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete payment",
-                                    tint = MaterialTheme.colorScheme.error
+                            if (childSummary.overpaidAmount > 0) {
+                                PaymentSummaryRow(
+                                    "Overpaid",
+                                    childSummary.overpaidAmount,
+                                    bold = true
                                 )
                             }
                         }
                     }
                 }
             }
+
+            store.errorMessage?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            store.successMessage?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
         }
     }
 
@@ -378,6 +500,24 @@ fun PaymentsScreen(store: TransportStore) {
             onSave = { payment ->
                 store.savePayment(payment)
                 showPaymentDialog = false
+            }
+        )
+    }
+
+    // EDIT PAYMENT DIALOG
+
+    paymentToEdit?.let { payment ->
+
+        AddPaymentDialog(
+            children = store.children,
+            defaultMonth = payment.monthKey,
+            existingPayment = payment,
+            onDismiss = {
+                paymentToEdit = null
+            },
+            onSave = { updatedPayment ->
+                store.savePayment(updatedPayment)
+                paymentToEdit = null
             }
         )
     }
@@ -432,10 +572,12 @@ private fun PaymentSummaryRow(
     amount: Double,
     bold: Boolean = false
 ) {
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+
         Text(
             label,
             fontWeight = if (bold) {
@@ -456,49 +598,63 @@ private fun PaymentSummaryRow(
     }
 }
 
-// ADD PAYMENT DIALOG
+// ADD / EDIT PAYMENT DIALOG
 
 @Composable
 private fun AddPaymentDialog(
     children: List<TransportChild>,
     defaultMonth: String,
+    existingPayment: TransportPayment? = null,
     onDismiss: () -> Unit,
     onSave: (TransportPayment) -> Unit
 ) {
 
-    var selectedChild by remember {
-        mutableStateOf<TransportChild?>(null)
+    var selectedChildId by remember(existingPayment?.id) {
+        mutableStateOf(existingPayment?.childId ?: "")
     }
 
-    var amount by remember {
-        mutableStateOf("")
+    val selectedChild = children.firstOrNull {
+        it.id == selectedChildId
     }
 
-    val initialDate = remember(defaultMonth) {
+    var amount by remember(existingPayment?.id) {
+        mutableStateOf(
+            existingPayment?.amount?.toString() ?: ""
+        )
+    }
 
-        val currentMonth = SimpleDateFormat(
-            "yyyy-MM",
-            Locale.US
-        ).format(Calendar.getInstance().time)
+    val initialDate = remember(defaultMonth, existingPayment?.id) {
 
-        if (defaultMonth == currentMonth) {
+        if (existingPayment != null) {
 
-            SimpleDateFormat(
-                "yyyy-MM-dd",
+            existingPayment.paymentDate
+
+        } else {
+
+            val currentMonth = SimpleDateFormat(
+                "yyyy-MM",
                 Locale.US
             ).format(Calendar.getInstance().time)
 
-        } else {
-            "$defaultMonth-01"
+            if (defaultMonth == currentMonth) {
+
+                SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.US
+                ).format(Calendar.getInstance().time)
+
+            } else {
+                "$defaultMonth-01"
+            }
         }
     }
 
-    var paymentDate by remember(defaultMonth) {
+    var paymentDate by remember(defaultMonth, existingPayment?.id) {
         mutableStateOf(initialDate)
     }
 
-    var note by remember {
-        mutableStateOf("")
+    var note by remember(existingPayment?.id) {
+        mutableStateOf(existingPayment?.note ?: "")
     }
 
     var showChildren by remember {
@@ -509,11 +665,15 @@ private fun AddPaymentDialog(
         mutableStateOf("")
     }
 
+    val isEditing = existingPayment != null
+
     AlertDialog(
         onDismissRequest = onDismiss,
 
         title = {
-            Text("Add Payment")
+            Text(
+                if (isEditing) "Edit Payment" else "Add Payment"
+            )
         },
 
         text = {
@@ -533,7 +693,9 @@ private fun AddPaymentDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        selectedChild?.name ?: "Select Child"
+                        selectedChild?.name
+                            ?: existingPayment?.childName
+                            ?: "Select Child"
                     )
                 }
 
@@ -596,7 +758,7 @@ private fun AddPaymentDialog(
                     when {
 
                         selectedChild == null ->
-                            error = "Select a child"
+                            error = "Select a valid child"
 
                         parsedAmount == null ||
                             !parsedAmount.isFinite() ||
@@ -608,9 +770,21 @@ private fun AddPaymentDialog(
 
                         else -> {
 
-                            val child = selectedChild!!
+                            val child = selectedChild
 
-                            onSave(
+                            val payment = if (existingPayment != null) {
+
+                                existingPayment.copy(
+                                    childId = child.id,
+                                    childName = child.name,
+                                    amount = parsedAmount,
+                                    paymentDate = paymentDate,
+                                    monthKey = paymentDate.take(7),
+                                    note = note.trim()
+                                )
+
+                            } else {
+
                                 TransportPayment(
                                     childId = child.id,
                                     childName = child.name,
@@ -619,12 +793,17 @@ private fun AddPaymentDialog(
                                     monthKey = paymentDate.take(7),
                                     note = note.trim()
                                 )
-                            )
+                            }
+
+                            onSave(payment)
                         }
                     }
                 }
             ) {
-                Text("Save Payment")
+                Text(
+                    if (isEditing) "Update Payment"
+                    else "Save Payment"
+                )
             }
         },
 
@@ -638,7 +817,7 @@ private fun AddPaymentDialog(
         }
     )
 
-    // CHILD SELECTION DIALOG
+    // CHILD SELECTION
 
     if (showChildren) {
 
@@ -663,7 +842,7 @@ private fun AddPaymentDialog(
 
                         TextButton(
                             onClick = {
-                                selectedChild = child
+                                selectedChildId = child.id
                                 showChildren = false
                             },
                             modifier = Modifier.fillMaxWidth()
