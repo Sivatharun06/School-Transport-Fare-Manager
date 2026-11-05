@@ -2,12 +2,14 @@
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -47,67 +49,86 @@ fun DashboardScreen(onLogout: () -> Unit) {
         Icons.Default.Settings
     )
 
+    val currentTitle = when {
+        showFarePlans -> "Payment Configurations"
+        showTrips -> "Trips"
+        showProfile -> "Profile"
+        else -> "School Transport"
+    }
+
+    val currentSubtitle = when {
+        showFarePlans -> "Manage your transport fare plans"
+        showTrips -> "Manage your transport trips"
+        showProfile -> "Manage your account details"
+        else -> "Fare Manager"
+    }
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
 
-        // TOP HEADER
+        // PREMIUM APP HEADER
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 18.dp,
-                    vertical = 16.dp
-                ),
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 2.dp
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
-            if (showFarePlans || showTrips || showProfile) {
-                IconButton(
-                    onClick = {
-                        showFarePlans = false
-                        showTrips = false
-                        showProfile = false
+                if (showFarePlans || showTrips || showProfile) {
+                    IconButton(
+                        onClick = {
+                            showFarePlans = false
+                            showTrips = false
+                            showProfile = false
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(15.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsBus,
+                            contentDescription = "School transport",
+                            modifier = Modifier.padding(11.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Icon(
-                        Icons.Default.ArrowBack,
-                        contentDescription = "Back"
+                    Text(
+                        text = currentTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = currentSubtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = when {
-                        showFarePlans -> "Payment Configurations"
-                        showTrips -> "Trips"
-                        showProfile -> "Profile"
-                        else -> "School Transport"
-                    },
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Text(
-                    text = when {
-                        showFarePlans ->
-                            "Manage your transport fare plans"
-                        showTrips ->
-                            "Manage your transport trips"
-                        showProfile ->
-                            "Manage your account details"
-                        else ->
-                            "Fare Manager"
-                    },
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
         }
-
-        HorizontalDivider()
 
         // MAIN CONTENT
 
@@ -116,7 +137,6 @@ fun DashboardScreen(onLogout: () -> Unit) {
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-
             when {
 
                 showFarePlans -> {
@@ -174,7 +194,11 @@ fun DashboardScreen(onLogout: () -> Unit) {
 
         if (!showFarePlans && !showTrips && !showProfile) {
 
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
+                tonalElevation = 8.dp
+            ) {
 
                 titles.forEachIndexed { index, title ->
 
@@ -193,10 +217,25 @@ fun DashboardScreen(onLogout: () -> Unit) {
                         },
 
                         label = {
-                            Text(title)
+                            Text(
+                                text = title,
+                                fontWeight = if (selectedTab == index) {
+                                    FontWeight.Bold
+                                } else {
+                                    FontWeight.Medium
+                                }
+                            )
                         },
 
-                        alwaysShowLabel = true
+                        alwaysShowLabel = true,
+
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
                 }
             }
