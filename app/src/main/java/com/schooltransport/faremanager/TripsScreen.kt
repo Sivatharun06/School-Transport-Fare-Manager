@@ -63,13 +63,8 @@ fun TripsScreen(store: TransportStore) {
                 },
                 enabled = store.children.isNotEmpty()
             ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = null
-                )
-
+                Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(Modifier.width(4.dp))
-
                 Text("Add Trip")
             }
         }
@@ -77,17 +72,11 @@ fun TripsScreen(store: TransportStore) {
         Spacer(Modifier.height(12.dp))
 
         store.errorMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.error
-            )
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
 
         store.successMessage?.let {
-            Text(
-                it,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text(it, color = MaterialTheme.colorScheme.primary)
         }
 
         if (store.children.isEmpty()) {
@@ -156,9 +145,7 @@ fun TripsScreen(store: TransportStore) {
                                     trip.fromLocation.isNotBlank() ||
                                     trip.toLocation.isNotBlank()
                                 ) {
-                                    Text(
-                                        "${trip.fromLocation} → ${trip.toLocation}"
-                                    )
+                                    Text("${trip.fromLocation} → ${trip.toLocation}")
                                 }
 
                                 Text(
@@ -173,13 +160,8 @@ fun TripsScreen(store: TransportStore) {
                                     }"
                                 )
 
-                                Text(
-                                    "Morning fare: Rs. ${trip.morningFare.toInt()}"
-                                )
-
-                                Text(
-                                    "Return fare: Rs. ${trip.returnFare.toInt()}"
-                                )
+                                Text("Morning fare: Rs. ${trip.morningFare.toInt()}")
+                                Text("Return fare: Rs. ${trip.returnFare.toInt()}")
 
                                 Text(
                                     "Total: Rs. ${trip.totalFare.toInt()}",
@@ -225,8 +207,6 @@ fun TripsScreen(store: TransportStore) {
         }
     }
 
-    // ADD / EDIT DIALOG
-
     if (showDialog) {
 
         TripFormDialog(
@@ -244,8 +224,6 @@ fun TripsScreen(store: TransportStore) {
         )
     }
 
-    // DELETE CONFIRMATION
-
     tripToDelete?.let { trip ->
 
         AlertDialog(
@@ -256,9 +234,7 @@ fun TripsScreen(store: TransportStore) {
                 Text("Delete Trip?")
             },
             text = {
-                Text(
-                    "Delete ${trip.childName}'s trip on ${trip.date}?"
-                )
+                Text("Delete ${trip.childName}'s trip on ${trip.date}?")
             },
             confirmButton = {
                 Button(
@@ -286,10 +262,11 @@ fun TripsScreen(store: TransportStore) {
     }
 }
 
-// TRIP FORM DIALOG
+// PUBLIC TRIP FORM DIALOG – REUSED ON HOME AND TRIPS PAGE
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TripFormDialog(
+fun TripFormDialog(
     children: List<TransportChild>,
     existingTrip: TransportTrip?,
     onDismiss: () -> Unit,
@@ -390,14 +367,9 @@ private fun TripFormDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-
         title = {
-            Text(
-                if (existingTrip == null) "Add Trip"
-                else "Edit Trip"
-            )
+            Text(if (existingTrip == null) "Add Trip" else "Edit Trip")
         },
-
         text = {
 
             Column(
@@ -408,8 +380,6 @@ private fun TripFormDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
 
-                // CHILD SELECTION
-
                 OutlinedButton(
                     onClick = {
                         showChildPicker = true
@@ -418,8 +388,6 @@ private fun TripFormDialog(
                 ) {
                     Text(selectedChild?.name ?: "Select Child")
                 }
-
-                // DATE
 
                 OutlinedTextField(
                     value = date,
@@ -434,8 +402,6 @@ private fun TripFormDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // TIME
-
                 OutlinedTextField(
                     value = time,
                     onValueChange = {
@@ -448,8 +414,6 @@ private fun TripFormDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                // ROUTE
 
                 OutlinedTextField(
                     value = fromLocation,
@@ -477,8 +441,6 @@ private fun TripFormDialog(
 
                 HorizontalDivider()
 
-                // MORNING
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -488,7 +450,6 @@ private fun TripFormDialog(
                             morningDone = it
                         }
                     )
-
                     Text("Morning completed")
                 }
 
@@ -508,8 +469,6 @@ private fun TripFormDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // RETURN
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -519,7 +478,6 @@ private fun TripFormDialog(
                             returnDone = it
                         }
                     )
-
                     Text("Return completed")
                 }
 
@@ -538,8 +496,6 @@ private fun TripFormDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                // NOTE
 
                 OutlinedTextField(
                     value = note,
@@ -630,19 +586,15 @@ private fun TripFormDialog(
         }
     )
 
-    // CHILD PICKER
-
     if (showChildPicker) {
 
         AlertDialog(
             onDismissRequest = {
                 showChildPicker = false
             },
-
             title = {
                 Text("Select Child")
             },
-
             text = {
 
                 Column(
@@ -661,19 +613,11 @@ private fun TripFormDialog(
 
                                 selectedChild = child
 
-                                // Same child: preserve historical route and fares.
-                                // Different child: use selected child's current details.
-
                                 if (!isSameChild) {
-
                                     fromLocation = child.fromLocation
                                     toLocation = child.toLocation
-
-                                    morningFare =
-                                        child.morningFare.toString()
-
-                                    returnFare =
-                                        child.returnFare.toString()
+                                    morningFare = child.morningFare.toString()
+                                    returnFare = child.returnFare.toString()
                                 }
 
                                 showChildPicker = false
@@ -686,7 +630,6 @@ private fun TripFormDialog(
                     }
                 }
             },
-
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -700,8 +643,6 @@ private fun TripFormDialog(
     }
 }
 
-// DATE VALIDATION
-
 private fun isValidTripDate(value: String): Boolean {
 
     if (!value.matches(Regex("^\\d{4}-\\d{2}-\\d{2}$"))) {
@@ -709,16 +650,9 @@ private fun isValidTripDate(value: String): Boolean {
     }
 
     return try {
-
-        val format = SimpleDateFormat(
-            "yyyy-MM-dd",
-            Locale.US
-        )
-
+        val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         format.isLenient = false
-
         format.parse(value) != null
-
     } catch (_: Exception) {
         false
     }
