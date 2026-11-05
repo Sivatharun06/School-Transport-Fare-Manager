@@ -259,11 +259,13 @@ fun FarePlansScreen(store: TransportStore) {
                             ) {
                                 FareAmountCard(
                                     title = "Morning Trip",
-                                    amount = plan.morningFare
+                                    amount = plan.morningFare,
+                                    modifier = Modifier.weight(1f)
                                 )
                                 FareAmountCard(
                                     title = "Return Trip",
-                                    amount = plan.returnFare
+                                    amount = plan.returnFare,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
 
@@ -374,11 +376,11 @@ fun FarePlansScreen(store: TransportStore) {
 @Composable
 private fun FareAmountCard(
     title: String,
-    amount: Double
+    amount: Double,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .weight(1f)
+        modifier = modifier
             .background(
                 Color(0xFFFFF8E5),
                 RoundedCornerShape(12.dp)
