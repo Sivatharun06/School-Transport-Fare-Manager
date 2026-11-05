@@ -1,20 +1,24 @@
 
 package com.schooltransport.faremanager
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -22,6 +26,11 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+
+private val ProfilePurple = Color(0xFF6033AD)
+private val ProfileDeepPurple = Color(0xFF382064)
+private val ProfileSoftPurple = Color(0xFFF0E9FC)
+private val ProfileBackground = Color(0xFFF8F6FC)
 
 @Composable
 fun ProfileScreen() {
@@ -51,66 +60,65 @@ fun ProfileScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(ProfileBackground)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        Text(
-            "My Profile",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            "View and manage your account information.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        // ACCOUNT DETAILS
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                "My Profile",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = ProfileDeepPurple
+            )
+            Text(
+                "View and manage your account information.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-
-                Text(
-                    "Account Information",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                ProfileSectionHeader(
+                    icon = {
+                        Icon(
+                            Icons.Default.Badge,
+                            contentDescription = null,
+                            tint = ProfilePurple
+                        )
+                    },
+                    title = "Account Information"
                 )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Badge,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(Modifier.width(10.dp))
-
-                    Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ProfileIcon(Icons.Default.Badge)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
                         Text(
                             "User ID",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.Gray
                         )
-
                         Text(
                             user?.uid ?: "Not available",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodySmall,
+                            color = ProfileDeepPurple
                         )
                     }
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = Color(0xFFEDE8F4))
 
                 OutlinedTextField(
                     value = name,
@@ -123,11 +131,9 @@ fun ProfileScreen() {
                     singleLine = true,
                     label = { Text("Full Name") },
                     leadingIcon = {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null
-                        )
-                    }
+                        Icon(Icons.Default.Person, contentDescription = null)
+                    },
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 Button(
@@ -165,68 +171,71 @@ fun ProfileScreen() {
                         }
                     },
                     enabled = !isSavingName && !isChangingPassword,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ProfilePurple
+                    )
                 ) {
                     if (isSavingName) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = Color.White
                         )
                     } else {
-                        Text("Save Name")
+                        Text("Save Name", fontWeight = FontWeight.SemiBold)
                     }
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(color = Color(0xFFEDE8F4))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Email,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(Modifier.width(10.dp))
-
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ProfileIcon(Icons.Default.Email)
+                    Spacer(Modifier.width(12.dp))
                     Column {
                         Text(
                             "Email Address",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = Color.Gray
                         )
-
                         Text(
                             user?.email ?: "Not available",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = ProfileDeepPurple
                         )
                     }
                 }
             }
         }
 
-        // CHANGE PASSWORD
-
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp)
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier.padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
-                Text(
-                    "Change Password",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                ProfileSectionHeader(
+                    icon = {
+                        Icon(
+                            Icons.Default.Security,
+                            contentDescription = null,
+                            tint = ProfilePurple
+                        )
+                    },
+                    title = "Change Password"
                 )
 
                 Text(
                     "Enter your current password to verify your identity.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray
                 )
 
                 OutlinedTextField(
@@ -245,7 +254,8 @@ fun ProfileScreen() {
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
@@ -261,7 +271,8 @@ fun ProfileScreen() {
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
@@ -277,7 +288,8 @@ fun ProfileScreen() {
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 Button(
@@ -340,7 +352,6 @@ fun ProfileScreen() {
                                                         currentPassword = ""
                                                         newPassword = ""
                                                         confirmPassword = ""
-
                                                         showMessage(
                                                             "Password changed successfully."
                                                         )
@@ -358,30 +369,95 @@ fun ProfileScreen() {
                         }
                     },
                     enabled = !isChangingPassword && !isSavingName,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ProfilePurple
+                    )
                 ) {
                     if (isChangingPassword) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = Color.White
                         )
                     } else {
-                        Text("Update Password")
+                        Text("Update Password", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
         }
 
         if (message.isNotBlank()) {
-            Text(
-                text = message,
-                color = if (messageIsError) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (messageIsError) {
+                        Color(0xFFFFEAEA)
+                    } else {
+                        Color(0xFFE5F5E9)
+                    }
+                )
+            ) {
+                Text(
+                    text = message,
+                    modifier = Modifier.padding(12.dp),
+                    color = if (messageIsError) {
+                        Color(0xFFB3261E)
+                    } else {
+                        Color(0xFF236B43)
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
+
+        Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun ProfileIcon(icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Box(
+        modifier = Modifier
+            .size(38.dp)
+            .background(ProfileSoftPurple, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = ProfilePurple
+        )
+    }
+}
+
+@Composable
+private fun ProfileSectionHeader(
+    icon: @Composable () -> Unit,
+    title: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .background(ProfileSoftPurple, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            icon()
+        }
+
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = ProfileDeepPurple
+        )
     }
 }
