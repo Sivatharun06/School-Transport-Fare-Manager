@@ -28,7 +28,6 @@ class TransportStore {
     private val scope =
         CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    // Prevent overlapping Firebase operations.
     private val operationMutex = Mutex()
 
     var farePlans by mutableStateOf<List<FarePlan>>(emptyList())
@@ -51,6 +50,15 @@ class TransportStore {
 
     var successMessage by mutableStateOf<String?>(null)
         private set
+
+    // CALENDAR CHILD SELECTION
+
+    var selectedCalendarChildId by mutableStateOf("")
+        private set
+
+    fun selectCalendarChild(childId: String) {
+        selectedCalendarChildId = childId
+    }
 
     // LOAD DATA
 
@@ -88,6 +96,14 @@ class TransportStore {
 
         payments = repository.getPayments()
             .sortedByDescending { it.paymentDate }
+
+        // Keep the previously selected child if it still exists.
+        if (
+            selectedCalendarChildId.isNotBlank() &&
+            children.none { it.id == selectedCalendarChildId }
+        ) {
+            selectedCalendarChildId = ""
+        }
     }
 
     // COMMON FIREBASE OPERATION
@@ -147,9 +163,6 @@ class TransportStore {
         execute(
             {
                 repository.saveFarePlan(cleanPlan)
-
-                // Update children assigned to an existing plan.
-                // Historical trip records remain unchanged.
 
                 if (cleanPlan.id.isNotBlank()) {
 
@@ -231,8 +244,6 @@ class TransportStore {
             return
         }
 
-        // New children must have a fare plan.
-
         if (child.id.isBlank() && selectedPlan == null) {
             errorMessage =
                 "Please select a payment configuration"
@@ -248,9 +259,6 @@ class TransportStore {
             )
 
         } else {
-
-            // Preserve existing fares for legacy children.
-
             child
         }
 
@@ -384,9 +392,6 @@ class TransportStore {
             return
         }
 
-        // Always derive the payment month from its date.
-        // This prevents payments being assigned to the wrong month.
-
         val normalizedPayment = payment.copy(
             monthKey = payment.paymentDate.take(7)
         )
@@ -488,7 +493,8 @@ class TransportStore {
 
     private fun isValidDate(value: String): Boolean {
 
-        if (!value.matches(
+        if (
+            !value.matches(
                 Regex("^\\d{4}-\\d{2}-\\d{2}$")
             )
         ) {
