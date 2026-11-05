@@ -144,7 +144,9 @@ fun ChildrenScreen(store: TransportStore) {
         AlertDialog(
             onDismissRequest = { deleteChild = null },
             title = { Text("Delete Child?") },
-            text = { Text("Delete ${child.name}? Existing trip and payment history will remain.") },
+            text = {
+                Text("Delete ${child.name}? Existing trip and payment history will remain.")
+            },
             confirmButton = {
                 TextButton(onClick = {
                     store.deleteChild(child.id)
@@ -164,7 +166,7 @@ fun ChildrenScreen(store: TransportStore) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChildDialog(
+fun ChildDialog(
     store: TransportStore,
     child: TransportChild?,
     onDismiss: () -> Unit,
