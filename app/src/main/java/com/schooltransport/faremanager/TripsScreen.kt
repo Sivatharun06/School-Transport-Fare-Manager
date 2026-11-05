@@ -332,12 +332,14 @@ fun TripsScreen(store: TransportStore) {
                                 TripStatusCard(
                                     title = "Morning",
                                     completed = trip.morningDone,
-                                    fare = trip.morningFare
+                                    fare = trip.morningFare,
+                                    modifier = Modifier.weight(1f)
                                 )
                                 TripStatusCard(
                                     title = "Return",
                                     completed = trip.returnDone,
-                                    fare = trip.returnFare
+                                    fare = trip.returnFare,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
 
@@ -444,11 +446,11 @@ fun TripsScreen(store: TransportStore) {
 private fun TripStatusCard(
     title: String,
     completed: Boolean,
-    fare: Double
+    fare: Double,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
-            .weight(1f)
+        modifier = modifier
             .background(
                 if (completed) Color(0xFFFFF5D6) else Color(0xFFF5F3F7),
                 RoundedCornerShape(12.dp)
