@@ -13,16 +13,24 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+private val WeekendRed = Color(0xFFD94848)
+private val WeekendGreen = Color(0xFF236B43)
+private val WeekdayPurple = Color(0xFFECE2FA)
+private val WeekdayGold = Color(0xFFFFD34E)
+private val DeepPurpleText = Color(0xFF382064)
+
 private data class CalendarDateItem(
     val date: String,
     val dateLabel: String,
-    val dayLabel: String
+    val dayLabel: String,
+    val isWeekend: Boolean
 )
 
 @Composable
@@ -50,19 +58,12 @@ fun CalendarScreen(store: TransportStore) {
         store.loadAll()
     }
 
-    // SELECTED CHILD
-
-    LaunchedEffect(
-        store.children,
-        store.selectedCalendarChildId
-    ) {
+    LaunchedEffect(store.children, store.selectedCalendarChildId) {
         if (
             store.children.isNotEmpty() &&
             store.selectedCalendarChildId.isBlank()
         ) {
-            store.selectCalendarChild(
-                store.children.first().id
-            )
+            store.selectCalendarChild(store.children.first().id)
         }
     }
 
@@ -70,12 +71,7 @@ fun CalendarScreen(store: TransportStore) {
         it.id == store.selectedCalendarChildId
     } ?: store.children.firstOrNull()
 
-    // MONTH INFORMATION
-
-    val monthCalendar = remember(
-        displayedMonth,
-        displayedYear
-    ) {
+    val monthCalendar = remember(displayedMonth, displayedYear) {
         Calendar.getInstance().apply {
             set(Calendar.YEAR, displayedYear)
             set(Calendar.MONTH, displayedMonth)
@@ -87,10 +83,7 @@ fun CalendarScreen(store: TransportStore) {
         }
     }
 
-    val monthKey = remember(
-        displayedMonth,
-        displayedYear
-    ) {
+    val monthKey = remember(displayedMonth, displayedYear) {
         String.format(
             Locale.US,
             "%04d-%02d",
@@ -99,23 +92,14 @@ fun CalendarScreen(store: TransportStore) {
         )
     }
 
-    val monthName = remember(
-        displayedMonth,
-        displayedYear
-    ) {
+    val monthName = remember(displayedMonth, displayedYear) {
         SimpleDateFormat(
             "MMMM yyyy",
             Locale.getDefault()
         ).format(monthCalendar.time)
     }
 
-    // GENERATE ALL DATES
-
-    val dateItems = remember(
-        displayedMonth,
-        displayedYear
-    ) {
-
+    val dateItems = remember(displayedMonth, displayedYear) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, displayedYear)
             set(Calendar.MONTH, displayedMonth)
@@ -125,29 +109,21 @@ fun CalendarScreen(store: TransportStore) {
         val totalDays =
             calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
 
-        val dateFormat = SimpleDateFormat(
-            "yyyy-MM-dd",
-            Locale.US
-        )
-
-        val labelFormat = SimpleDateFormat(
-            "d MMM",
-            Locale.getDefault()
-        )
-
-        val dayFormat = SimpleDateFormat(
-            "EEEE",
-            Locale.getDefault()
-        )
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val labelFormat = SimpleDateFormat("d MMM", Locale.getDefault())
+        val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
 
         (1..totalDays).map { day ->
-
             calendar.set(Calendar.DAY_OF_MONTH, day)
+
+            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
 
             CalendarDateItem(
                 date = dateFormat.format(calendar.time),
                 dateLabel = labelFormat.format(calendar.time),
-                dayLabel = dayFormat.format(calendar.time)
+                dayLabel = dayFormat.format(calendar.time),
+                isWeekend = dayOfWeek == Calendar.SATURDAY ||
+                    dayOfWeek == Calendar.SUNDAY
             )
         }
     }
@@ -173,15 +149,8 @@ fun CalendarScreen(store: TransportStore) {
         } ?: MonthlySummary()
     }
 
-    val morningCount = childTrips.count {
-        it.morningDone
-    }
-
-    val returnCount = childTrips.count {
-        it.returnDone
-    }
-
-    // CLEAR PENDING ROWS AFTER STORE UPDATE
+    val morningCount = childTrips.count { it.morningDone }
+    val returnCount = childTrips.count { it.returnDone }
 
     LaunchedEffect(
         store.trips,
@@ -191,10 +160,7 @@ fun CalendarScreen(store: TransportStore) {
         pendingDates.clear()
     }
 
-    // MONTH NAVIGATION
-
     fun changeMonth(direction: Int) {
-
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, displayedYear)
             set(Calendar.MONTH, displayedMonth)
@@ -206,15 +172,8 @@ fun CalendarScreen(store: TransportStore) {
         displayedYear = calendar.get(Calendar.YEAR)
     }
 
-    // ATTENDANCE TOGGLE
-
-    fun toggleAttendance(
-        date: String,
-        isMorning: Boolean
-    ) {
-
+    fun toggleAttendance(date: String, isMorning: Boolean) {
         val child = selectedChild ?: return
-
         val pendingKey = "${child.id}_$date"
 
         if (pendingKey in pendingDates) return
@@ -238,13 +197,11 @@ fun CalendarScreen(store: TransportStore) {
         pendingDates.add(pendingKey)
 
         if (!newMorningDone && !newReturnDone) {
-
             if (existingTrip != null) {
                 store.deleteTrip(existingTrip.id)
             } else {
                 pendingDates.remove(pendingKey)
             }
-
             return
         }
 
@@ -272,8 +229,6 @@ fun CalendarScreen(store: TransportStore) {
         store.saveTrip(updatedTrip)
     }
 
-    // SCREEN
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -282,48 +237,41 @@ fun CalendarScreen(store: TransportStore) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // MONTH SELECTOR
-
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 3.dp
-            )
+            elevation = CardDefaults.cardElevation(3.dp)
         ) {
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
-                IconButton(
-                    onClick = { changeMonth(-1) }
-                ) {
+                IconButton(onClick = { changeMonth(-1) }) {
                     Icon(
                         Icons.Default.ChevronLeft,
-                        contentDescription = "Previous month"
+                        contentDescription = "Previous month",
+                        tint = DeepPurpleText
                     )
                 }
 
                 Text(
                     text = monthName,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = DeepPurpleText
                 )
 
-                IconButton(
-                    onClick = { changeMonth(1) }
-                ) {
+                IconButton(onClick = { changeMonth(1) }) {
                     Icon(
                         Icons.Default.ChevronRight,
-                        contentDescription = "Next month"
+                        contentDescription = "Next month",
+                        tint = DeepPurpleText
                     )
                 }
             }
@@ -331,21 +279,14 @@ fun CalendarScreen(store: TransportStore) {
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // CHILD SELECTOR
-
         Box {
-
             OutlinedButton(
-                onClick = {
-                    childMenuExpanded = true
-                },
+                onClick = { childMenuExpanded = true },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(16.dp)
             ) {
-
                 Text(
-                    text = selectedChild?.name
-                        ?: "Select Children",
+                    text = selectedChild?.name ?: "Select Children",
                     modifier = Modifier.weight(1f)
                 )
 
@@ -357,25 +298,17 @@ fun CalendarScreen(store: TransportStore) {
 
             DropdownMenu(
                 expanded = childMenuExpanded,
-                onDismissRequest = {
-                    childMenuExpanded = false
-                },
+                onDismissRequest = { childMenuExpanded = false },
                 modifier = Modifier.fillMaxWidth(0.85f)
             ) {
-
                 store.children.forEach { child ->
-
                     DropdownMenuItem(
                         text = {
                             Text(
                                 child.name,
                                 fontWeight = if (
                                     child.id == selectedChild?.id
-                                ) {
-                                    FontWeight.Bold
-                                } else {
-                                    FontWeight.Normal
-                                }
+                                ) FontWeight.Bold else FontWeight.Normal
                             )
                         },
                         onClick = {
@@ -389,10 +322,7 @@ fun CalendarScreen(store: TransportStore) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // ATTENDANCE LIST
-
         if (selectedChild == null) {
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -404,14 +334,11 @@ fun CalendarScreen(store: TransportStore) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
         } else {
-
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-
                 items(
                     items = dateItems,
                     key = { it.date }
@@ -421,43 +348,55 @@ fun CalendarScreen(store: TransportStore) {
                         it.date == item.date
                     }
 
-                    val morningDone =
-                        trip?.morningDone ?: false
-
-                    val returnDone =
-                        trip?.returnDone ?: false
+                    val morningDone = trip?.morningDone ?: false
+                    val returnDone = trip?.returnDone ?: false
 
                     val dailyTotal =
                         (if (morningDone) {
                             trip?.morningFare ?: selectedChild.morningFare
-                        } else {
-                            0.0
-                        }) +
+                        } else 0.0) +
                         (if (returnDone) {
                             trip?.returnFare ?: selectedChild.returnFare
-                        } else {
-                            0.0
-                        })
+                        } else 0.0)
 
-                    val pendingKey =
-                        "${selectedChild.id}_${item.date}"
-
+                    val pendingKey = "${selectedChild.id}_${item.date}"
                     val rowPending =
-                        pendingKey in pendingDates ||
-                            store.isLoading
+                        pendingKey in pendingDates || store.isLoading
+
+                    val morningBackground = when {
+                        item.isWeekend && morningDone -> WeekendGreen
+                        item.isWeekend -> WeekendRed
+                        morningDone -> WeekdayGold
+                        else -> WeekdayPurple
+                    }
+
+                    val returnBackground = when {
+                        item.isWeekend && returnDone -> WeekendGreen
+                        item.isWeekend -> WeekendRed
+                        returnDone -> WeekdayGold
+                        else -> WeekdayPurple
+                    }
+
+                    val morningText = if (item.isWeekend) {
+                        Color.White
+                    } else {
+                        DeepPurpleText
+                    }
+
+                    val returnText = if (item.isWeekend) {
+                        Color.White
+                    } else {
+                        DeepPurpleText
+                    }
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor =
-                                MaterialTheme.colorScheme.surface
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 1.dp
-                        )
+                        elevation = CardDefaults.cardElevation(2.dp)
                     ) {
-
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -466,16 +405,12 @@ fun CalendarScreen(store: TransportStore) {
                                     vertical = 10.dp
                                 ),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement =
-                                Arrangement.spacedBy(5.dp)
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-
-                            // DATE AND DAY
 
                             Column(
                                 modifier = Modifier.weight(1.05f)
                             ) {
-
                                 Text(
                                     text = item.dateLabel,
                                     fontWeight = FontWeight.Bold,
@@ -485,18 +420,17 @@ fun CalendarScreen(store: TransportStore) {
                                 Text(
                                     text = item.dayLabel,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = if (item.isWeekend) {
+                                        WeekendRed
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
                             }
 
-                            // MORNING BUTTON
-
                             Button(
                                 onClick = {
-                                    toggleAttendance(
-                                        item.date,
-                                        true
-                                    )
+                                    toggleAttendance(item.date, true)
                                 },
                                 enabled = !rowPending,
                                 modifier = Modifier
@@ -506,32 +440,26 @@ fun CalendarScreen(store: TransportStore) {
                                     horizontal = 2.dp,
                                     vertical = 4.dp
                                 ),
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(11.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (morningDone) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.surfaceVariant
-                                    },
-                                    contentColor = if (morningDone) {
-                                        MaterialTheme.colorScheme.onPrimary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                    containerColor = morningBackground,
+                                    contentColor = morningText,
+                                    disabledContainerColor = morningBackground.copy(
+                                        alpha = 0.55f
+                                    ),
+                                    disabledContentColor = morningText.copy(
+                                        alpha = 0.7f
+                                    )
                                 )
                             ) {
-
                                 Column(
-                                    horizontalAlignment =
-                                        Alignment.CenterHorizontally
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-
                                     Text(
                                         "Morning",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold
                                     )
-
                                     Text(
                                         "Rs. ${"%.0f".format(Locale.US, trip?.morningFare ?: selectedChild.morningFare)}",
                                         style = MaterialTheme.typography.labelSmall
@@ -539,14 +467,9 @@ fun CalendarScreen(store: TransportStore) {
                                 }
                             }
 
-                            // RETURN BUTTON
-
                             Button(
                                 onClick = {
-                                    toggleAttendance(
-                                        item.date,
-                                        false
-                                    )
+                                    toggleAttendance(item.date, false)
                                 },
                                 enabled = !rowPending,
                                 modifier = Modifier
@@ -556,32 +479,26 @@ fun CalendarScreen(store: TransportStore) {
                                     horizontal = 2.dp,
                                     vertical = 4.dp
                                 ),
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(11.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (returnDone) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.surfaceVariant
-                                    },
-                                    contentColor = if (returnDone) {
-                                        MaterialTheme.colorScheme.onPrimary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                    containerColor = returnBackground,
+                                    contentColor = returnText,
+                                    disabledContainerColor = returnBackground.copy(
+                                        alpha = 0.55f
+                                    ),
+                                    disabledContentColor = returnText.copy(
+                                        alpha = 0.7f
+                                    )
                                 )
                             ) {
-
                                 Column(
-                                    horizontalAlignment =
-                                        Alignment.CenterHorizontally
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-
                                     Text(
                                         "Return",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold
                                     )
-
                                     Text(
                                         "Rs. ${"%.0f".format(Locale.US, trip?.returnFare ?: selectedChild.returnFare)}",
                                         style = MaterialTheme.typography.labelSmall
@@ -589,13 +506,10 @@ fun CalendarScreen(store: TransportStore) {
                                 }
                             }
 
-                            // DAILY TOTAL
-
                             Column(
                                 modifier = Modifier.weight(0.9f),
                                 horizontalAlignment = Alignment.End
                             ) {
-
                                 Text(
                                     "Total",
                                     style = MaterialTheme.typography.labelSmall,
@@ -612,10 +526,7 @@ fun CalendarScreen(store: TransportStore) {
                     }
                 }
 
-                // MONTHLY SUMMARY
-
                 item {
-
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
@@ -630,7 +541,6 @@ fun CalendarScreen(store: TransportStore) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
                         SummaryCard(
                             title = "Total",
                             amount = monthlySummary.totalFare,
@@ -664,7 +574,6 @@ fun CalendarScreen(store: TransportStore) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
                         TripCountCard(
                             title = "Morning Trips",
                             count = morningCount,
@@ -691,25 +600,20 @@ private fun SummaryCard(
     amount: Double,
     modifier: Modifier = Modifier
 ) {
-
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 14.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
@@ -733,25 +637,20 @@ private fun TripCountCard(
     count: Int,
     modifier: Modifier = Modifier
 ) {
-
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
