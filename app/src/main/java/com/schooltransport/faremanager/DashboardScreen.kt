@@ -27,6 +27,10 @@ fun DashboardScreen(onLogout: () -> Unit) {
         mutableStateOf(false)
     }
 
+    var showProfile by remember {
+        mutableStateOf(false)
+    }
+
     val titles = listOf(
         "Home",
         "Children",
@@ -59,11 +63,12 @@ fun DashboardScreen(onLogout: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            if (showFarePlans || showTrips) {
+            if (showFarePlans || showTrips || showProfile) {
                 IconButton(
                     onClick = {
                         showFarePlans = false
                         showTrips = false
+                        showProfile = false
                     }
                 ) {
                     Icon(
@@ -80,6 +85,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
                     text = when {
                         showFarePlans -> "Payment Configurations"
                         showTrips -> "Trips"
+                        showProfile -> "Profile"
                         else -> "School Transport"
                     },
                     style = MaterialTheme.typography.titleLarge
@@ -91,6 +97,8 @@ fun DashboardScreen(onLogout: () -> Unit) {
                             "Manage your transport fare plans"
                         showTrips ->
                             "Manage your transport trips"
+                        showProfile ->
+                            "Manage your account details"
                         else ->
                             "Fare Manager"
                     },
@@ -119,6 +127,10 @@ fun DashboardScreen(onLogout: () -> Unit) {
                     TripsScreen(store)
                 }
 
+                showProfile -> {
+                    ProfileScreen()
+                }
+
                 else -> {
                     when (selectedTab) {
 
@@ -129,6 +141,9 @@ fun DashboardScreen(onLogout: () -> Unit) {
                             },
                             onOpenTrips = {
                                 showTrips = true
+                            },
+                            onOpenProfile = {
+                                showProfile = true
                             }
                         )
 
@@ -142,6 +157,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
                             onLogout = {
                                 showFarePlans = false
                                 showTrips = false
+                                showProfile = false
                                 selectedTab = 0
                                 onLogout()
                             },
@@ -156,7 +172,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
 
         // BOTTOM NAVIGATION
 
-        if (!showFarePlans && !showTrips) {
+        if (!showFarePlans && !showTrips && !showProfile) {
 
             NavigationBar {
 
