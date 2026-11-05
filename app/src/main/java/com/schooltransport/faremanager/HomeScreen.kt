@@ -19,7 +19,8 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     store: TransportStore,
-    onOpenFarePlans: () -> Unit
+    onOpenFarePlans: () -> Unit,
+    onOpenTrips: () -> Unit
 ) {
     val today = remember { Calendar.getInstance() }
 
@@ -93,12 +94,7 @@ fun HomeScreen(
 
         // MONTHLY OVERVIEW
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -120,7 +116,6 @@ fun HomeScreen(
                                 set(selectedYear, selectedMonth, 1)
                                 add(Calendar.MONTH, -1)
                             }
-
                             selectedMonth = calendar.get(Calendar.MONTH)
                             selectedYear = calendar.get(Calendar.YEAR)
                         }
@@ -140,7 +135,6 @@ fun HomeScreen(
                                 set(selectedYear, selectedMonth, 1)
                                 add(Calendar.MONTH, 1)
                             }
-
                             selectedMonth = calendar.get(Calendar.MONTH)
                             selectedYear = calendar.get(Calendar.YEAR)
                         }
@@ -150,23 +144,14 @@ fun HomeScreen(
                 }
 
                 OverviewRow("Total Fare", summary.totalFare)
-
                 OverviewRow("Paid Amount", summary.paidAmount)
 
                 HorizontalDivider()
 
-                OverviewRow(
-                    "Balance",
-                    summary.balance,
-                    bold = true
-                )
+                OverviewRow("Balance", summary.balance, bold = true)
 
                 if (summary.overpaidAmount > 0) {
-                    OverviewRow(
-                        "Overpaid",
-                        summary.overpaidAmount,
-                        bold = true
-                    )
+                    OverviewRow("Overpaid", summary.overpaidAmount, bold = true)
                 }
 
                 Text(
@@ -178,9 +163,7 @@ fun HomeScreen(
 
         // CHILDREN
 
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -191,11 +174,7 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                OverviewRow(
-                    "Registered",
-                    store.children.size.toDouble()
-                )
-
+                OverviewRow("Registered", store.children.size.toDouble())
                 OverviewRow(
                     "Active",
                     store.children.count { it.isActive }.toDouble()
@@ -203,11 +182,35 @@ fun HomeScreen(
             }
         }
 
+        // TRIPS
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "Trips",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text("View and manage your children's transport trips.")
+
+                Text("Recorded trips: ${store.trips.size}")
+
+                Button(
+                    onClick = onOpenTrips,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("View Trips")
+                }
+            }
+        }
+
         // PAYMENT CONFIGURATIONS
 
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -235,9 +238,7 @@ fun HomeScreen(
 
         // QUICK INFORMATION
 
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Card(modifier = Modifier.fillMaxWidth()) {
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -253,20 +254,12 @@ fun HomeScreen(
             }
         }
 
-        // MESSAGES
-
         store.errorMessage?.let { message ->
-            Text(
-                message,
-                color = MaterialTheme.colorScheme.error
-            )
+            Text(message, color = MaterialTheme.colorScheme.error)
         }
 
         store.successMessage?.let { message ->
-            Text(
-                message,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text(message, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -283,20 +276,12 @@ private fun OverviewRow(
     ) {
         Text(
             label,
-            fontWeight = if (bold) {
-                FontWeight.Bold
-            } else {
-                FontWeight.Normal
-            }
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal
         )
 
         Text(
             "Rs. ${"%.2f".format(Locale.US, amount)}",
-            fontWeight = if (bold) {
-                FontWeight.Bold
-            } else {
-                FontWeight.Medium
-            }
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium
         )
     }
 }
