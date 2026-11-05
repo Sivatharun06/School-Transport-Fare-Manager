@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
 
 private val AuthPurple = Color(0xFF5120A0)
 private val AuthDark = Color(0xFF29105E)
@@ -38,6 +39,7 @@ fun AuthScreen(
     onAuthenticated: () -> Unit
 ) {
     var isRegister by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -70,7 +72,6 @@ fun AuthScreen(
                 .padding(horizontal = 22.dp, vertical = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Spacer(Modifier.height(20.dp))
 
             Surface(
@@ -123,7 +124,6 @@ fun AuthScreen(
                     modifier = Modifier.padding(22.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-
                     Text(
                         if (isRegister) "Create Account"
                         else "Welcome Back!",
@@ -144,6 +144,33 @@ fun AuthScreen(
                     )
 
                     Spacer(Modifier.height(24.dp))
+
+                    // NAME - REGISTRATION ONLY
+
+                    if (isRegister) {
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = {
+                                name = it
+                                message = ""
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !loading,
+                            label = { Text("Full Name") },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text
+                            ),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AuthPurple,
+                                unfocusedBorderColor = Color(0xFFE3D9F3),
+                                focusedLabelColor = AuthPurple
+                            )
+                        )
+
+                        Spacer(Modifier.height(14.dp))
+                    }
 
                     // EMAIL
 
@@ -304,9 +331,14 @@ fun AuthScreen(
                             message = ""
                             messageIsSuccess = false
 
+                            val cleanName = name.trim()
                             val cleanEmail = email.trim()
 
                             when {
+                                isRegister && cleanName.isBlank() -> {
+                                    message = "Please enter your name."
+                                }
+
                                 cleanEmail.isBlank() -> {
                                     message = "Please enter your email."
                                 }
@@ -342,14 +374,38 @@ fun AuthScreen(
                                     }
 
                                     task.addOnCompleteListener { result ->
-                                        loading = false
-
-                                        if (result.isSuccessful) {
-                                            onAuthenticated()
-                                        } else {
+                                        if (!result.isSuccessful) {
+                                            loading = false
                                             message =
                                                 result.exception?.localizedMessage
                                                     ?: "Authentication failed."
+                                        } else if (isRegister) {
+                                            val profileUpdate =
+                                                UserProfileChangeRequest.Builder()
+                                                    .setDisplayName(cleanName)
+                                                    .build()
+
+                                            auth.currentUser
+                                                ?.updateProfile(profileUpdate)
+                                                ?.addOnCompleteListener { profileResult ->
+                                                    loading = false
+
+                                                    // The account has already been created.
+                                                    // If the name update fails, the user can
+                                                    // still add it later from the Profile page.
+                                                    if (!profileResult.isSuccessful) {
+                                                        messageIsSuccess = true
+                                                    }
+
+                                                    onAuthenticated()
+                                                }
+                                                ?: run {
+                                                    loading = false
+                                                    onAuthenticated()
+                                                }
+                                        } else {
+                                            loading = false
+                                            onAuthenticated()
                                         }
                                     }
                                 }
