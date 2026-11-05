@@ -23,11 +23,14 @@ fun DashboardScreen(onLogout: () -> Unit) {
         mutableStateOf(false)
     }
 
+    var showTrips by remember {
+        mutableStateOf(false)
+    }
+
     val titles = listOf(
         "Home",
         "Children",
         "Calendar",
-        "Trips",
         "Payments",
         "Settings"
     )
@@ -36,7 +39,6 @@ fun DashboardScreen(onLogout: () -> Unit) {
         Icons.Default.Home,
         Icons.Default.People,
         Icons.Default.CalendarMonth,
-        Icons.Default.DirectionsCar,
         Icons.Default.Payments,
         Icons.Default.Settings
     )
@@ -57,10 +59,11 @@ fun DashboardScreen(onLogout: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            if (showFarePlans) {
+            if (showFarePlans || showTrips) {
                 IconButton(
                     onClick = {
                         showFarePlans = false
+                        showTrips = false
                     }
                 ) {
                     Icon(
@@ -74,19 +77,22 @@ fun DashboardScreen(onLogout: () -> Unit) {
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = if (showFarePlans) {
-                        "Payment Configurations"
-                    } else {
-                        "School Transport"
+                    text = when {
+                        showFarePlans -> "Payment Configurations"
+                        showTrips -> "Trips"
+                        else -> "School Transport"
                     },
                     style = MaterialTheme.typography.titleLarge
                 )
 
                 Text(
-                    text = if (showFarePlans) {
-                        "Manage your transport fare plans"
-                    } else {
-                        "Fare Manager"
+                    text = when {
+                        showFarePlans ->
+                            "Manage your transport fare plans"
+                        showTrips ->
+                            "Manage your transport trips"
+                        else ->
+                            "Fare Manager"
                     },
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -103,46 +109,54 @@ fun DashboardScreen(onLogout: () -> Unit) {
                 .fillMaxWidth()
         ) {
 
-            if (showFarePlans) {
+            when {
 
-                FarePlansScreen(store)
+                showFarePlans -> {
+                    FarePlansScreen(store)
+                }
 
-            } else {
+                showTrips -> {
+                    TripsScreen(store)
+                }
 
-                when (selectedTab) {
+                else -> {
+                    when (selectedTab) {
 
-                    0 -> HomeScreen(
-                        store = store,
-                        onOpenFarePlans = {
-                            showFarePlans = true
-                        }
-                    )
+                        0 -> HomeScreen(
+                            store = store,
+                            onOpenFarePlans = {
+                                showFarePlans = true
+                            },
+                            onOpenTrips = {
+                                showTrips = true
+                            }
+                        )
 
-                    1 -> ChildrenScreen(store)
+                        1 -> ChildrenScreen(store)
 
-                    2 -> CalendarScreen(store)
+                        2 -> CalendarScreen(store)
 
-                    3 -> TripsScreen(store)
+                        3 -> PaymentsScreen(store)
 
-                    4 -> PaymentsScreen(store)
-
-                    5 -> SettingsScreen(
-                        onLogout = {
-                            showFarePlans = false
-                            selectedTab = 0
-                            onLogout()
-                        },
-                        onOpenFarePlans = {
-                            showFarePlans = true
-                        }
-                    )
+                        4 -> SettingsScreen(
+                            onLogout = {
+                                showFarePlans = false
+                                showTrips = false
+                                selectedTab = 0
+                                onLogout()
+                            },
+                            onOpenFarePlans = {
+                                showFarePlans = true
+                            }
+                        )
+                    }
                 }
             }
         }
 
         // BOTTOM NAVIGATION
 
-        if (!showFarePlans) {
+        if (!showFarePlans && !showTrips) {
 
             NavigationBar {
 
