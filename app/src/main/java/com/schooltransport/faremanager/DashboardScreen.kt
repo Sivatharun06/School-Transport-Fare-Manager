@@ -1,3 +1,4 @@
+
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
@@ -47,7 +48,6 @@ fun DashboardScreen(onLogout: () -> Unit) {
             .statusBarsPadding()
     ) {
 
-        // SHARED HEADER — ALL FIVE MAIN PAGES
         if (isMainPage) {
             PremiumAppHeader(
                 onProfileClick = {
@@ -56,7 +56,6 @@ fun DashboardScreen(onLogout: () -> Unit) {
             )
         }
 
-        // SUB-PAGE HEADER
         if (isSubPage) {
             Column(
                 modifier = Modifier
@@ -82,15 +81,12 @@ fun DashboardScreen(onLogout: () -> Unit) {
             }
         }
 
-        // PAGE CONTENT
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-
             when {
-
                 showFarePlans -> {
                     FarePlansScreen(store)
                 }
@@ -105,7 +101,6 @@ fun DashboardScreen(onLogout: () -> Unit) {
 
                 else -> {
                     when (selectedTab) {
-
                         0 -> HomeScreen(
                             store = store,
                             onOpenFarePlans = {
@@ -126,20 +121,19 @@ fun DashboardScreen(onLogout: () -> Unit) {
                         3 -> PaymentsScreen(store)
 
                         4 -> SettingsScreen(
-                            onLogout = onLogout
+                            onLogout = onLogout,
+                            onOpenFarePlans = {
+                                showFarePlans = true
+                            }
                         )
                     }
                 }
             }
         }
 
-        // BOTTOM NAVIGATION
         if (!isSubPage) {
-
             NavigationBar {
-
                 titles.forEachIndexed { index, title ->
-
                     NavigationBarItem(
                         selected = selectedTab == index,
                         onClick = {
