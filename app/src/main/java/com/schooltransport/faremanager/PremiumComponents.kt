@@ -337,3 +337,51 @@ fun PremiumMonthSelector(
         )
     }
 }
+@Composable
+fun PremiumSubPageHeader(
+    title: String,
+    onBackClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(18.dp)),
+        shape = RoundedCornerShape(18.dp),
+        color = PremiumRoyalPurple
+    ) {
+        Row(
+            modifier = Modifier
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            PremiumDeepPurple,
+                            PremiumRoyalPurple,
+                            PremiumPurple
+                        )
+                    )
+                )
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onBackClick) {
+                Text(
+                    "‹ Back",
+                    color = PremiumGold,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = title,
+                modifier = Modifier.weight(1f),
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.width(55.dp))
+        }
+    }
+}
