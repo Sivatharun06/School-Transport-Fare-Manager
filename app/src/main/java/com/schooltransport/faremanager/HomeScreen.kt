@@ -44,6 +44,16 @@ private val HomeDarkGold = Color(0xFF9A6B13)
 private val HomeCream = Color(0xFFFFF8E8)
 private val HomeWhite = Color(0xFFFFFFFF)
 
+// GREEN PALETTE - PAID
+private val HomePaidGreen = Color(0xFF16833B)
+private val HomePaidDarkGreen = Color(0xFF075B28)
+private val HomePaidLightGreen = Color(0xFFE8F8E9)
+
+// YELLOW PALETTE - BALANCE
+private val HomeBalanceYellow = Color(0xFFFFC928)
+private val HomeBalanceDark = Color(0xFF8A4B08)
+private val HomeBalanceLight = Color(0xFFFFF5D5)
+
 // HOME BACKGROUND: 10% SOFT ROYAL PINK + 10% SOFT ROYAL PURPLE
 private val HomeSoftRoyalPink =
     lerp(Color.White, Color(0xFFE8AFC5), 0.10f)
@@ -195,11 +205,11 @@ fun HomeScreen(
             }
         }
 
-        // WELCOME MESSAGE
+        // WELCOME MESSAGE - REDUCED SIZE
 
         Text(
             text = "Welcome, $profileName to your Dashboard",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
             color = HomeDeepPurple
         )
@@ -230,8 +240,6 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
-                // PREVIOUS MONTH
-
                 Box(
                     modifier = Modifier
                         .size(43.dp)
@@ -256,8 +264,6 @@ fun HomeScreen(
                     )
                 }
 
-                // CALENDAR ICON + MONTH NAME
-
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -281,8 +287,6 @@ fun HomeScreen(
                         textAlign = TextAlign.Center
                     )
                 }
-
-                // NEXT MONTH
 
                 Box(
                     modifier = Modifier
@@ -424,50 +428,86 @@ fun HomeScreen(
             )
         }
 
-        // MONTHLY TOTAL
+        // MONTHLY TOTAL - OPPOSITE GRADIENT + GOLD BORDER
+        // BUS IMAGE CAN BE ADDED LATER
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 2.dp,
+                    color = HomeGold,
+                    shape = RoundedCornerShape(20.dp)
+                ),
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = Color.Transparent
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 5.dp
             )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                HomePurple,
+                                HomeRoyalPurple,
+                                HomeDeepPurple
+                            )
+                        )
+                    )
                     .padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    "Monthly Total",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.titleMedium
+                    "MONTHLY TOTAL",
+                    color = HomeWhite,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Text(
                     "Rs. ${"%.2f".format(Locale.US, summary.totalFare)}",
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = HomeWhite,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    "${summary.tripCount} attendance records",
-                    color = MaterialTheme.colorScheme.onPrimary
+                    "Total transportation fees of this month",
+                    color = HomeCream,
+                    style = MaterialTheme.typography.labelSmall
                 )
             }
         }
 
-        // PAID AND BALANCE
+        // PAID AND BALANCE CARDS
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+
+            // PAID - GREEN PALETTE
+
             Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .border(
+                        width = 1.5.dp,
+                        color = HomePaidGreen,
+                        shape = RoundedCornerShape(16.dp)
+                    ),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = HomePaidLightGreen
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 3.dp
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -475,24 +515,59 @@ fun HomeScreen(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        "Paid",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(9.dp)
+                                .background(
+                                    HomePaidGreen,
+                                    CircleShape
+                                )
+                        )
+
+                        Text(
+                            "PAID",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = HomePaidDarkGreen
+                        )
+                    }
 
                     Text(
                         "Rs. ${"%.2f".format(Locale.US, summary.paidAmount)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = HomePaidDarkGreen
+                    )
+
+                    Text(
+                        "Total paid fees",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = HomePaidDarkGreen
                     )
                 }
             }
 
+            // BALANCE - YELLOW PALETTE
+
             Card(
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .border(
+                        width = 1.5.dp,
+                        color = HomeBalanceYellow,
+                        shape = RoundedCornerShape(16.dp)
+                    ),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = HomeBalanceLight
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 3.dp
+                )
             ) {
                 Column(
                     modifier = Modifier
@@ -500,17 +575,38 @@ fun HomeScreen(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        "Balance",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(9.dp)
+                                .background(
+                                    HomeBalanceYellow,
+                                    CircleShape
+                                )
+                        )
+
+                        Text(
+                            "BALANCE",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = HomeBalanceDark
+                        )
+                    }
 
                     Text(
                         "Rs. ${"%.2f".format(Locale.US, summary.balance)}",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
+                        color = HomeBalanceDark
+                    )
+
+                    Text(
+                        "Remaining balance",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = HomeBalanceDark
                     )
                 }
             }
@@ -526,30 +622,64 @@ fun HomeScreen(
             )
         }
 
-        // NEW TRIP
+        // NEW TRIP - FULLY ROUNDED PURPLE BUTTON
 
         Button(
             onClick = { showTripDialog = true },
             enabled = store.children.isNotEmpty(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(14.dp)
+                .height(54.dp),
+            shape = CircleShape,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = HomeRoyalPurple,
+                contentColor = HomeWhite,
+                disabledContainerColor = HomeRoyalPurple.copy(alpha = 0.4f),
+                disabledContentColor = HomeWhite.copy(alpha = 0.8f)
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 5.dp,
+                pressedElevation = 2.dp
+            )
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("New Trip")
+            Text(
+                "New Trip",
+                fontWeight = FontWeight.Bold
+            )
         }
 
-        // CHILDREN
+        // CHILDREN - HEADER PURPLE + GOLD PALETTE
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.5.dp,
+                    color = HomeGold,
+                    shape = RoundedCornerShape(18.dp)
+                ),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp
+            )
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                HomeDeepPurple,
+                                HomeRoyalPurple,
+                                HomePurple
+                            )
+                        )
+                    )
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -562,17 +692,23 @@ fun HomeScreen(
                         Text(
                             "Children",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = HomeWhite
                         )
 
                         Text(
                             "${store.children.size} registered",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = HomeGold
                         )
                     }
 
                     FilledTonalButton(
-                        onClick = { showChildDialog = true }
+                        onClick = { showChildDialog = true },
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = HomeGold,
+                            contentColor = HomeDeepPurple
+                        )
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null)
                         Spacer(Modifier.width(4.dp))
@@ -581,7 +717,10 @@ fun HomeScreen(
                 }
 
                 if (store.children.isEmpty()) {
-                    Text("No children added yet.")
+                    Text(
+                        "No children added yet.",
+                        color = HomeWhite
+                    )
                 } else {
                     Row(
                         modifier = Modifier
@@ -601,8 +740,11 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .size(62.dp)
                                             .clip(CircleShape)
-                                            .background(
-                                                MaterialTheme.colorScheme.secondaryContainer
+                                            .background(HomeCream)
+                                            .border(
+                                                2.dp,
+                                                HomeGold,
+                                                CircleShape
                                             ),
                                         contentAlignment = Alignment.Center
                                     ) {
@@ -613,7 +755,7 @@ fun HomeScreen(
                                                 ?.toString() ?: "?",
                                             style = MaterialTheme.typography.headlineMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            color = HomeRoyalPurple
                                         )
                                     }
 
@@ -621,16 +763,17 @@ fun HomeScreen(
                                         child.name,
                                         style = MaterialTheme.typography.labelMedium,
                                         textAlign = TextAlign.Center,
-                                        maxLines = 2
+                                        maxLines = 2,
+                                        color = HomeWhite
                                     )
 
                                     Text(
                                         if (child.isActive) "Active" else "Inactive",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (child.isActive) {
-                                            MaterialTheme.colorScheme.primary
+                                            HomeGold
                                         } else {
-                                            MaterialTheme.colorScheme.error
+                                            HomeCream
                                         }
                                     )
                                 }
@@ -642,10 +785,14 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Active children")
+                    Text(
+                        "Active children",
+                        color = HomeWhite
+                    )
                     Text(
                         store.children.count { it.isActive }.toString(),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = HomeGold
                     )
                 }
             }
