@@ -1,3 +1,4 @@
+
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,6 +43,13 @@ private val HomeGold = Color(0xFFFFD45A)
 private val HomeDarkGold = Color(0xFF9A6B13)
 private val HomeCream = Color(0xFFFFF8E8)
 private val HomeWhite = Color(0xFFFFFFFF)
+
+// HOME BACKGROUND: 5% SOFT ROYAL PINK + PURPLE
+private val HomeSoftRoyalPink =
+    lerp(Color.White, Color(0xFFE8AFC5), 0.05f)
+
+private val HomeSoftRoyalPurple =
+    lerp(Color.White, Color(0xFF8D6BB5), 0.05f)
 
 @Composable
 fun HomeScreen(
@@ -106,6 +115,14 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        HomeSoftRoyalPink,
+                        HomeSoftRoyalPurple
+                    )
+                )
+            )
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -187,19 +204,19 @@ fun HomeScreen(
             color = HomeDeepPurple
         )
 
-        // MONTH SELECTOR
+        // MONTH SELECTOR - 50% REDUCED COLOUR DENSITY
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .border(
                     width = 1.5.dp,
-                    color = HomeGold,
+                    color = HomeGold.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(22.dp)
                 ),
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
-                containerColor = HomeRoyalPurple
+                containerColor = HomeRoyalPurple.copy(alpha = 0.5f)
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 5.dp
@@ -212,6 +229,7 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+
                 // PREVIOUS MONTH
 
                 Box(
@@ -251,13 +269,13 @@ fun HomeScreen(
                     Icon(
                         imageVector = Icons.Default.CalendarMonth,
                         contentDescription = "Choose month",
-                        tint = HomeGold,
+                        tint = HomeDeepPurple,
                         modifier = Modifier.size(27.dp)
                     )
 
                     Text(
                         text = monthName,
-                        color = HomeWhite,
+                        color = HomeDeepPurple,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
