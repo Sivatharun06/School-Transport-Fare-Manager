@@ -44,12 +44,12 @@ private val HomeDarkGold = Color(0xFF9A6B13)
 private val HomeCream = Color(0xFFFFF8E8)
 private val HomeWhite = Color(0xFFFFFFFF)
 
-// HOME BACKGROUND: 5% SOFT ROYAL PINK + PURPLE
+// HOME BACKGROUND: 10% SOFT ROYAL PINK + 10% SOFT ROYAL PURPLE
 private val HomeSoftRoyalPink =
-    lerp(Color.White, Color(0xFFE8AFC5), 0.05f)
+    lerp(Color.White, Color(0xFFE8AFC5), 0.10f)
 
 private val HomeSoftRoyalPurple =
-    lerp(Color.White, Color(0xFF8D6BB5), 0.05f)
+    lerp(Color.White, Color(0xFF8D6BB5), 0.10f)
 
 @Composable
 fun HomeScreen(
@@ -128,7 +128,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        // PREMIUM HEADER
+        // PREMIUM HEADER - EXISTING THEME UNCHANGED
 
         Surface(
             modifier = Modifier
@@ -204,7 +204,7 @@ fun HomeScreen(
             color = HomeDeepPurple
         )
 
-        // MONTH SELECTOR - 50% REDUCED COLOUR DENSITY
+        // MONTH SELECTOR - WHITE TAB
 
         Card(
             modifier = Modifier
@@ -216,7 +216,7 @@ fun HomeScreen(
                 ),
             shape = RoundedCornerShape(22.dp),
             colors = CardDefaults.cardColors(
-                containerColor = HomeRoyalPurple.copy(alpha = 0.5f)
+                containerColor = Color.White
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 5.dp
@@ -269,13 +269,13 @@ fun HomeScreen(
                     Icon(
                         imageVector = Icons.Default.CalendarMonth,
                         contentDescription = "Choose month",
-                        tint = HomeDeepPurple,
+                        tint = HomeRoyalPurple,
                         modifier = Modifier.size(27.dp)
                     )
 
                     Text(
                         text = monthName,
-                        color = HomeDeepPurple,
+                        color = HomeRoyalPurple,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -350,19 +350,13 @@ fun HomeScreen(
                                     contentDescription = "Previous year",
                                     tint = HomeGold
                                 )
-                                Text(
-                                    "Year",
-                                    color = HomeGold
-                                )
+                                Text("Year", color = HomeGold)
                             }
 
                             TextButton(
                                 onClick = { selectedYear++ }
                             ) {
-                                Text(
-                                    "Year",
-                                    color = HomeGold
-                                )
+                                Text("Year", color = HomeGold)
                                 Icon(
                                     Icons.Default.ChevronRight,
                                     contentDescription = "Next year",
