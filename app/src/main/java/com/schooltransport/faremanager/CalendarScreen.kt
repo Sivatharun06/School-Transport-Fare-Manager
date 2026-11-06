@@ -643,4 +643,3 @@ private fun TripCountCard(
         }
     }
 }
-4
