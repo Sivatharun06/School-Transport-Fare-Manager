@@ -1,18 +1,23 @@
 
 package com.schooltransport.faremanager
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -20,11 +25,20 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-private val WeekendRed = Color(0xFFD94848)
-private val WeekendGreen = Color(0xFF236B43)
-private val WeekdayPurple = Color(0xFFECE2FA)
-private val WeekdayGold = Color(0xFFFFD34E)
-private val DeepPurpleText = Color(0xFF382064)
+private val CalendarDeepPurple = Color(0xFF32145F)
+private val CalendarPurple = Color(0xFF54258D)
+private val CalendarMidPurple = Color(0xFF7040A8)
+private val CalendarGold = Color(0xFFFFD84D)
+private val CalendarGoldBorder = Color(0xFFE7B92F)
+private val CalendarSoftPurple = Color(0xFFECE2FA)
+private val CalendarPurpleText = Color(0xFF382064)
+
+private val CalendarSoftRed = Color(0xFFFFEEEE)
+private val CalendarRed = Color(0xFFB83232)
+private val CalendarMidRed = Color(0xFFD65A5A)
+private val CalendarGreen = Color(0xFF236B43)
+
+private val CalendarWhite = Color.White
 
 private data class CalendarDateItem(
     val date: String,
@@ -232,23 +246,40 @@ fun CalendarScreen(store: TransportStore) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        CalendarDeepPurple,
+                        CalendarPurple,
+                        Color(0xFF452078)
+                    )
+                )
+            )
+            .padding(horizontal = 14.dp)
     ) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // MONTH SELECTOR
+
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    1.5.dp,
+                    CalendarGold,
+                    RoundedCornerShape(18.dp)
+                ),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = CalendarWhite
             ),
-            elevation = CardDefaults.cardElevation(3.dp)
+            elevation = CardDefaults.cardElevation(4.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -256,7 +287,7 @@ fun CalendarScreen(store: TransportStore) {
                     Icon(
                         Icons.Default.ChevronLeft,
                         contentDescription = "Previous month",
-                        tint = DeepPurpleText
+                        tint = CalendarPurpleText
                     )
                 }
 
@@ -264,30 +295,43 @@ fun CalendarScreen(store: TransportStore) {
                     text = monthName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = DeepPurpleText
+                    color = CalendarPurpleText
                 )
 
                 IconButton(onClick = { changeMonth(1) }) {
                     Icon(
                         Icons.Default.ChevronRight,
                         contentDescription = "Next month",
-                        tint = DeepPurpleText
+                        tint = CalendarPurpleText
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // CHILD SELECTOR
 
         Box {
             OutlinedButton(
                 onClick = { childMenuExpanded = true },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = CalendarWhite,
+                    contentColor = CalendarPurpleText
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.5.dp,
+                    CalendarGold
+                )
             ) {
                 Text(
                     text = selectedChild?.name ?: "Select Children",
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold
                 )
 
                 Icon(
@@ -331,14 +375,17 @@ fun CalendarScreen(store: TransportStore) {
             ) {
                 Text(
                     text = "Please add a child first",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = CalendarWhite,
+                    fontWeight = FontWeight.Medium
                 )
             }
         } else {
+
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 items(
                     items = dateItems,
                     key = { it.date }
@@ -363,11 +410,29 @@ fun CalendarScreen(store: TransportStore) {
                     val rowPending =
                         pendingKey in pendingDates || store.isLoading
 
+                    val rowBackground = if (item.isWeekend) {
+                        CalendarSoftRed
+                    } else {
+                        CalendarSoftPurple
+                    }
+
+                    val rowBorder = if (item.isWeekend) {
+                        CalendarRed
+                    } else {
+                        CalendarGoldBorder
+                    }
+
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                1.dp,
+                                rowBorder,
+                                RoundedCornerShape(16.dp)
+                            ),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
+                            containerColor = rowBackground
                         ),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
@@ -375,12 +440,14 @@ fun CalendarScreen(store: TransportStore) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(
-                                    horizontal = 8.dp,
-                                    vertical = 10.dp
+                                    horizontal = 7.dp,
+                                    vertical = 9.dp
                                 ),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
+
+                            // DATE AND DAY
 
                             Column(
                                 modifier = Modifier.weight(1.05f)
@@ -388,6 +455,11 @@ fun CalendarScreen(store: TransportStore) {
                                 Text(
                                     text = item.dateLabel,
                                     fontWeight = FontWeight.Bold,
+                                    color = if (item.isWeekend) {
+                                        CalendarRed
+                                    } else {
+                                        CalendarPurpleText
+                                    },
                                     style = MaterialTheme.typography.bodyMedium
                                 )
 
@@ -395,112 +467,85 @@ fun CalendarScreen(store: TransportStore) {
                                     text = item.dayLabel,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (item.isWeekend) {
-                                        WeekendRed
+                                        CalendarRed
                                     } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                        CalendarPurpleText
                                     }
                                 )
                             }
 
-                            Button(
-                                onClick = {
-                                    toggleAttendance(item.date, true)
-                                },
+                            // MORNING BUTTON
+
+                            AttendanceButton(
+                                title = "Morning",
+                                fare = trip?.morningFare
+                                    ?: selectedChild.morningFare,
+                                selected = morningDone,
+                                weekend = item.isWeekend,
                                 enabled = !rowPending,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(52.dp),
-                                contentPadding = PaddingValues(
-                                    horizontal = 2.dp,
-                                    vertical = 4.dp
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color(0xFF702FC5),
-                                    disabledContainerColor = Color(0xFFF5F2F8),
-                                    disabledContentColor = Color(0xFF9B83B8)
-                                ),
-                                elevation = ButtonDefaults.buttonElevation(
-                                    defaultElevation = 3.dp,
-                                    pressedElevation = 1.dp,
-                                    disabledElevation = 0.dp
-                                )
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        "Morning",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        "Rs. ${"%.0f".format(Locale.US, trip?.morningFare ?: selectedChild.morningFare)}",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
+                                toggleAttendance(item.date, true)
                             }
 
-                            Button(
-                                onClick = {
-                                    toggleAttendance(item.date, false)
-                                },
+                            // RETURN BUTTON
+
+                            AttendanceButton(
+                                title = "Return",
+                                fare = trip?.returnFare
+                                    ?: selectedChild.returnFare,
+                                selected = returnDone,
+                                weekend = item.isWeekend,
                                 enabled = !rowPending,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(52.dp),
-                                contentPadding = PaddingValues(
-                                    horizontal = 2.dp,
-                                    vertical = 4.dp
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color(0xFF702FC5),
-                                    disabledContainerColor = Color(0xFFF5F2F8),
-                                    disabledContentColor = Color(0xFF9B83B8)
-                                ),
-                                elevation = ButtonDefaults.buttonElevation(
-                                    defaultElevation = 3.dp,
-                                    pressedElevation = 1.dp,
-                                    disabledElevation = 0.dp
-                                )
+                                modifier = Modifier.weight(1f)
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        "Return",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        "Rs. ${"%.0f".format(Locale.US, trip?.returnFare ?: selectedChild.returnFare)}",
-                                        style = MaterialTheme.typography.labelSmall
-                                    )
-                                }
+                                toggleAttendance(item.date, false)
                             }
+
+                            // DAILY TOTAL
 
                             Column(
-                                modifier = Modifier.weight(0.9f),
-                                horizontalAlignment = Alignment.End
+                                modifier = Modifier
+                                    .weight(0.9f)
+                                    .clip(RoundedCornerShape(11.dp))
+                                    .background(
+                                        if (item.isWeekend) {
+                                            CalendarMidRed
+                                        } else {
+                                            CalendarMidPurple
+                                        }
+                                    )
+                                    .padding(
+                                        horizontal = 4.dp,
+                                        vertical = 9.dp
+                                    ),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
                             ) {
                                 Text(
                                     "Total",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = CalendarWhite,
+                                    fontWeight = FontWeight.Medium
                                 )
 
                                 Text(
-                                    text = "Rs. ${"%.0f".format(Locale.US, dailyTotal)}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Bold
+                                    text = "Rs. ${
+                                        "%.0f".format(
+                                            Locale.US,
+                                            dailyTotal
+                                        )
+                                    }",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = CalendarWhite
                                 )
                             }
                         }
                     }
                 }
+
+                // MONTHLY SUMMARY
 
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -508,7 +553,8 @@ fun CalendarScreen(store: TransportStore) {
                     Text(
                         text = "Monthly Summary",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = CalendarGold
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -541,7 +587,8 @@ fun CalendarScreen(store: TransportStore) {
                     Text(
                         text = "Monthly Trips",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = CalendarGold
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -571,37 +618,136 @@ fun CalendarScreen(store: TransportStore) {
 }
 
 @Composable
+private fun AttendanceButton(
+    title: String,
+    fare: Double,
+    selected: Boolean,
+    weekend: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val shape = RoundedCornerShape(11.dp)
+
+    val backgroundBrush = when {
+        selected && weekend -> Brush.verticalGradient(
+            listOf(
+                Color(0xFF2E8050),
+                CalendarGreen
+            )
+        )
+
+        selected && !weekend -> Brush.verticalGradient(
+            listOf(
+                Color(0xFFFFE77A),
+                CalendarGold
+            )
+        )
+
+        weekend -> Brush.verticalGradient(
+            listOf(
+                CalendarSoftRed,
+                Color(0xFFFFE5E5)
+            )
+        )
+
+        else -> Brush.verticalGradient(
+            listOf(
+                CalendarWhite,
+                Color(0xFFFFFCF3)
+            )
+        )
+    }
+
+    val borderColor = when {
+        selected && weekend -> CalendarGreen
+        selected && !weekend -> CalendarGoldBorder
+        weekend -> CalendarRed
+        else -> CalendarGoldBorder
+    }
+
+    val textColor = when {
+        selected && weekend -> CalendarWhite
+        selected && !weekend -> CalendarPurpleText
+        weekend -> CalendarRed
+        else -> CalendarPurpleText
+    }
+
+    Column(
+        modifier = modifier
+            .height(52.dp)
+            .clip(shape)
+            .background(backgroundBrush)
+            .border(1.2.dp, borderColor, shape)
+            .clickable(
+                enabled = enabled,
+                onClick = onClick
+            )
+            .padding(horizontal = 2.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
+
+        Text(
+            text = "Rs. ${
+                "%.0f".format(Locale.US, fare)
+            }",
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor
+        )
+    }
+}
+
+@Composable
 private fun SummaryCard(
     title: String,
     amount: Double,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .border(
+                1.dp,
+                CalendarGold,
+                RoundedCornerShape(15.dp)
+            ),
+        shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = CalendarMidPurple
         ),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 14.dp, horizontal = 6.dp),
+                .padding(
+                    vertical = 14.dp,
+                    horizontal = 5.dp
+                ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = CalendarWhite,
+                fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(5.dp))
 
             Text(
-                text = "Rs. ${"%.0f".format(Locale.US, amount)}",
+                text = "Rs. ${
+                    "%.0f".format(Locale.US, amount)
+                }",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = CalendarGold
             )
         }
     }
@@ -614,12 +760,17 @@ private fun TripCountCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .border(
+                1.dp,
+                CalendarGold,
+                RoundedCornerShape(15.dp)
+            ),
+        shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = CalendarMidPurple
         ),
-        elevation = CardDefaults.cardElevation(2.dp)
+        elevation = CardDefaults.cardElevation(3.dp)
     ) {
         Column(
             modifier = Modifier
@@ -630,7 +781,7 @@ private fun TripCountCard(
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = CalendarWhite
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -638,7 +789,8 @@ private fun TripCountCard(
             Text(
                 text = count.toString(),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = CalendarGold
             )
         }
     }
