@@ -1,4 +1,3 @@
-
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
@@ -56,24 +55,11 @@ fun PaymentsScreen(store: TransportStore) {
         String.format(Locale.US, "%04d-%02d", year, month + 1)
     }
 
-    val monthName = remember(month, year) {
-        SimpleDateFormat("MMMM yyyy", Locale.ENGLISH)
-            .format(
-                Calendar.getInstance().apply {
-                    set(year, month, 1)
-                }.time
-            )
-    }
-
     LaunchedEffect(Unit) {
         store.loadAll()
     }
 
     val summary = store.monthlySummary(monthKey)
-
-    val monthlyPayments = store.payments
-        .filter { it.monthKey == monthKey }
-        .sortedByDescending { it.paymentDate }
 
     val allPayments = store.payments
         .sortedWith(
@@ -247,46 +233,16 @@ fun PaymentsScreen(store: TransportStore) {
                 .padding(16.dp)
         ) {
 
-            // MONTH SELECTOR - UNCHANGED
+            // PREMIUM MONTH SELECTOR
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                TextButton(
-                    onClick = {
-                        val c = Calendar.getInstance().apply {
-                            set(year, month, 1)
-                            add(Calendar.MONTH, -1)
-                        }
-                        month = c.get(Calendar.MONTH)
-                        year = c.get(Calendar.YEAR)
-                    }
-                ) {
-                    Text("‹ Previous")
+            PremiumMonthSelector(
+                month = month,
+                year = year,
+                onMonthChange = { newMonth, newYear ->
+                    month = newMonth
+                    year = newYear
                 }
-
-                Text(
-                    monthName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                TextButton(
-                    onClick = {
-                        val c = Calendar.getInstance().apply {
-                            set(year, month, 1)
-                            add(Calendar.MONTH, 1)
-                        }
-                        month = c.get(Calendar.MONTH)
-                        year = c.get(Calendar.YEAR)
-                    }
-                ) {
-                    Text("Next ›")
-                }
-            }
+            )
 
             Spacer(Modifier.height(14.dp))
 
