@@ -363,31 +363,6 @@ fun CalendarScreen(store: TransportStore) {
                     val rowPending =
                         pendingKey in pendingDates || store.isLoading
 
-                    val morningBackground = when {
-                        item.isWeekend && morningDone -> WeekendGreen
-                        item.isWeekend -> WeekendRed
-                        morningDone -> WeekdayGold
-                        else -> WeekdayPurple
-                    }
-
-                    val returnBackground = when {
-                        item.isWeekend && returnDone -> WeekendGreen
-                        item.isWeekend -> WeekendRed
-                        returnDone -> WeekdayGold
-                        else -> WeekdayPurple
-                    }
-
-                    val morningText = if (item.isWeekend) {
-                        Color.White
-                    } else {
-                        DeepPurpleText
-                    }
-
-                    val returnText = if (item.isWeekend) {
-                        Color.White
-                    } else {
-                        DeepPurpleText
-                    }
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
