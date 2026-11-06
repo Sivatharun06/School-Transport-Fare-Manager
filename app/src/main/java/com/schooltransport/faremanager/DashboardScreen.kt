@@ -1,12 +1,12 @@
+
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -16,29 +16,12 @@ fun DashboardScreen(onLogout: () -> Unit) {
 
     val store = remember { TransportStore() }
 
-    var selectedTab by remember {
-        mutableIntStateOf(0)
-    }
+    var selectedTab by remember { mutableIntStateOf(0) }
+    var showFarePlans by remember { mutableStateOf(false) }
+    var showTrips by remember { mutableStateOf(false) }
+    var showProfile by remember { mutableStateOf(false) }
 
-    var showFarePlans by remember {
-        mutableStateOf(false)
-    }
-
-    var showTrips by remember {
-        mutableStateOf(false)
-    }
-
-    var showProfile by remember {
-        mutableStateOf(false)
-    }
-
-    val titles = listOf(
-        "Home",
-        "Children",
-        "Calendar",
-        "Payments",
-        "Settings"
-    )
+    val titles = listOf("Home", "Children", "Calendar", "Payments", "Settings")
 
     val icons = listOf(
         Icons.Default.Home,
@@ -48,30 +31,43 @@ fun DashboardScreen(onLogout: () -> Unit) {
         Icons.Default.Settings
     )
 
+    val isSubPage = showFarePlans || showTrips || showProfile
+    val isMainPage = !isSubPage
+
     val currentTitle = when {
         showFarePlans -> "Payment Configurations"
         showTrips -> "Trips"
-        showProfile -> "Profile"
-        else -> "School Transport"
+        else -> "Profile"
     }
 
     val currentSubtitle = when {
         showFarePlans -> "Manage your transport fare plans"
         showTrips -> "Manage your transport trips"
-        showProfile -> "Manage your account details"
-        else -> "Fare Manager"
+        else -> "Manage your account details"
     }
 
-    val showAppHeader =
-        showFarePlans || showTrips || showProfile || selectedTab != 0
-
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
     ) {
 
-        // APP HEADER - HIDDEN ON HOME TAB
+        if (isMainPage && selectedTab != 0) {
+            Column(
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 10.dp,
+                    bottom = 8.dp
+                )
+            ) {
+                PremiumAppHeader(
+                    onProfileClick = { showProfile = true }
+                )
+            }
+        }
 
-        if (showAppHeader) {
+        if (isSubPage) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface,
@@ -80,52 +76,30 @@ fun DashboardScreen(onLogout: () -> Unit) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
-
-                    if (showFarePlans || showTrips || showProfile) {
-                        IconButton(
-                            onClick = {
-                                showFarePlans = false
-                                showTrips = false
-                                showProfile = false
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
+                    IconButton(
+                        onClick = {
+                            showFarePlans = false
+                            showTrips = false
+                            showProfile = false
                         }
-                    } else {
-                        Surface(
-                            shape = RoundedCornerShape(15.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.DirectionsBus,
-                                contentDescription = "School transport",
-                                modifier = Modifier.padding(11.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
 
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    Column {
                         Text(
-                            text = currentTitle,
+                            currentTitle,
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            fontWeight = FontWeight.Bold
                         )
-
                         Text(
-                            text = currentSubtitle,
+                            currentSubtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -134,95 +108,61 @@ fun DashboardScreen(onLogout: () -> Unit) {
             }
         }
 
-        // MAIN CONTENT
-
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         ) {
             when {
+                showFarePlans -> FarePlansScreen(store)
+                showTrips -> TripsScreen(store)
+                showProfile -> ProfileScreen()
 
-                showFarePlans -> {
-                    FarePlansScreen(store)
-                }
+                else -> when (selectedTab) {
+                    0 -> HomeScreen(
+                        store = store,
+                        onOpenFarePlans = { showFarePlans = true },
+                        onOpenTrips = { showTrips = true },
+                        onOpenProfile = { showProfile = true }
+                    )
 
-                showTrips -> {
-                    TripsScreen(store)
-                }
+                    1 -> ChildrenScreen(store)
+                    2 -> CalendarScreen(store)
+                    3 -> PaymentsScreen(store)
 
-                showProfile -> {
-                    ProfileScreen()
-                }
-
-                else -> {
-                    when (selectedTab) {
-
-                        0 -> HomeScreen(
-                            store = store,
-                            onOpenFarePlans = {
-                                showFarePlans = true
-                            },
-                            onOpenTrips = {
-                                showTrips = true
-                            },
-                            onOpenProfile = {
-                                showProfile = true
-                            }
-                        )
-
-                        1 -> ChildrenScreen(store)
-
-                        2 -> CalendarScreen(store)
-
-                        3 -> PaymentsScreen(store)
-
-                        4 -> SettingsScreen(
-                            onLogout = {
-                                showFarePlans = false
-                                showTrips = false
-                                showProfile = false
-                                selectedTab = 0
-                                onLogout()
-                            },
-                            onOpenFarePlans = {
-                                showFarePlans = true
-                            }
-                        )
-                    }
+                    4 -> SettingsScreen(
+                        onLogout = {
+                            showFarePlans = false
+                            showTrips = false
+                            showProfile = false
+                            selectedTab = 0
+                            onLogout()
+                        },
+                        onOpenFarePlans = { showFarePlans = true }
+                    )
                 }
             }
         }
 
-        // BOTTOM NAVIGATION
-
-        if (!showFarePlans && !showTrips && !showProfile) {
-
+        if (!isSubPage) {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
                 tonalElevation = 8.dp
             ) {
-
                 titles.forEachIndexed { index, title ->
-
                     NavigationBarItem(
                         selected = selectedTab == index,
-
-                        onClick = {
-                            selectedTab = index
-                        },
-
+                        onClick = { selectedTab = index },
                         icon = {
                             Icon(
                                 imageVector = icons[index],
                                 contentDescription = title
                             )
                         },
-
                         label = {
                             Text(
-                                text = title,
+                                title,
                                 fontWeight = if (selectedTab == index) {
                                     FontWeight.Bold
                                 } else {
@@ -230,9 +170,7 @@ fun DashboardScreen(onLogout: () -> Unit) {
                                 }
                             )
                         },
-
                         alwaysShowLabel = true,
-
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.onPrimary,
                             selectedTextColor = MaterialTheme.colorScheme.primary,
