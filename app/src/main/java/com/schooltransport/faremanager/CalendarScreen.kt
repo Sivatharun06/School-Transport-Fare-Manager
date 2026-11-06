@@ -1,4 +1,3 @@
-
 package com.schooltransport.faremanager
 
 import androidx.compose.foundation.background
@@ -10,8 +9,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,10 +30,9 @@ private val CalendarGoldBorder = Color(0xFFE7B92F)
 private val CalendarSoftPurple = Color(0xFFECE2FA)
 private val CalendarPurpleText = Color(0xFF382064)
 
-private val CalendarSoftRed = Color(0xFFFFEEEE)
-private val CalendarRed = Color(0xFFB83232)
-private val CalendarMidRed = Color(0xFFD65A5A)
-private val CalendarGreen = Color(0xFF236B43)
+private val CalendarSoftRuby = Color(0xFFF7E6EC)
+private val CalendarRuby = Color(0xFF8F1D46)
+private val CalendarMidRuby = Color(0xFFB7355D)
 
 private val CalendarWhite = Color.White
 
@@ -106,13 +102,6 @@ fun CalendarScreen(store: TransportStore) {
         )
     }
 
-    val monthName = remember(displayedMonth, displayedYear) {
-        SimpleDateFormat(
-            "MMMM yyyy",
-            Locale.getDefault()
-        ).format(monthCalendar.time)
-    }
-
     val dateItems = remember(displayedMonth, displayedYear) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, displayedYear)
@@ -172,18 +161,6 @@ fun CalendarScreen(store: TransportStore) {
         store.successMessage
     ) {
         pendingDates.clear()
-    }
-
-    fun changeMonth(direction: Int) {
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.YEAR, displayedYear)
-            set(Calendar.MONTH, displayedMonth)
-            set(Calendar.DAY_OF_MONTH, 1)
-            add(Calendar.MONTH, direction)
-        }
-
-        displayedMonth = calendar.get(Calendar.MONTH)
-        displayedYear = calendar.get(Calendar.YEAR)
     }
 
     fun toggleAttendance(date: String, isMorning: Boolean) {
@@ -260,53 +237,14 @@ fun CalendarScreen(store: TransportStore) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // MONTH SELECTOR
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    1.5.dp,
-                    CalendarGold,
-                    RoundedCornerShape(18.dp)
-                ),
-            shape = RoundedCornerShape(18.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = CalendarWhite
-            ),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = { changeMonth(-1) }) {
-                    Icon(
-                        Icons.Default.ChevronLeft,
-                        contentDescription = "Previous month",
-                        tint = CalendarPurpleText
-                    )
-                }
-
-                Text(
-                    text = monthName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = CalendarPurpleText
-                )
-
-                IconButton(onClick = { changeMonth(1) }) {
-                    Icon(
-                        Icons.Default.ChevronRight,
-                        contentDescription = "Next month",
-                        tint = CalendarPurpleText
-                    )
-                }
+        PremiumMonthSelector(
+            month = displayedMonth,
+            year = displayedYear,
+            onMonthChange = { newMonth, newYear ->
+                displayedMonth = newMonth
+                displayedYear = newYear
             }
-        }
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -411,13 +349,13 @@ fun CalendarScreen(store: TransportStore) {
                         pendingKey in pendingDates || store.isLoading
 
                     val rowBackground = if (item.isWeekend) {
-                        CalendarSoftRed
+                        CalendarSoftRuby
                     } else {
                         CalendarSoftPurple
                     }
 
                     val rowBorder = if (item.isWeekend) {
-                        CalendarRed
+                        CalendarRuby
                     } else {
                         CalendarGoldBorder
                     }
@@ -456,7 +394,7 @@ fun CalendarScreen(store: TransportStore) {
                                     text = item.dateLabel,
                                     fontWeight = FontWeight.Bold,
                                     color = if (item.isWeekend) {
-                                        CalendarRed
+                                        CalendarRuby
                                     } else {
                                         CalendarPurpleText
                                     },
@@ -467,7 +405,7 @@ fun CalendarScreen(store: TransportStore) {
                                     text = item.dayLabel,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (item.isWeekend) {
-                                        CalendarRed
+                                        CalendarRuby
                                     } else {
                                         CalendarPurpleText
                                     }
@@ -510,7 +448,7 @@ fun CalendarScreen(store: TransportStore) {
                                     .clip(RoundedCornerShape(11.dp))
                                     .background(
                                         if (item.isWeekend) {
-                                            CalendarMidRed
+                                            CalendarMidRuby
                                         } else {
                                             CalendarMidPurple
                                         }
@@ -632,8 +570,8 @@ private fun AttendanceButton(
     val backgroundBrush = when {
         selected && weekend -> Brush.verticalGradient(
             listOf(
-                Color(0xFF2E8050),
-                CalendarGreen
+                Color(0xFFB7355D),
+                CalendarRuby
             )
         )
 
@@ -646,8 +584,8 @@ private fun AttendanceButton(
 
         weekend -> Brush.verticalGradient(
             listOf(
-                CalendarSoftRed,
-                Color(0xFFFFE5E5)
+                CalendarSoftRuby,
+                Color(0xFFF2D5DF)
             )
         )
 
@@ -660,16 +598,16 @@ private fun AttendanceButton(
     }
 
     val borderColor = when {
-        selected && weekend -> CalendarGreen
+        selected && weekend -> CalendarRuby
         selected && !weekend -> CalendarGoldBorder
-        weekend -> CalendarRed
+        weekend -> CalendarRuby
         else -> CalendarGoldBorder
     }
 
     val textColor = when {
         selected && weekend -> CalendarWhite
         selected && !weekend -> CalendarPurpleText
-        weekend -> CalendarRed
+        weekend -> CalendarRuby
         else -> CalendarPurpleText
     }
 
