@@ -363,7 +363,6 @@ fun CalendarScreen(store: TransportStore) {
                     val rowPending =
                         pendingKey in pendingDates || store.isLoading
 
-
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -403,87 +402,103 @@ fun CalendarScreen(store: TransportStore) {
                                 )
                             }
 
-                            
-Button(
-    onClick = {
-        toggleAttendance(item.date, true)
-    },
-    enabled = !rowPending,
-    modifier = Modifier
-        .weight(1f)
-        .height(52.dp),
-    contentPadding = PaddingValues(
-        horizontal = 2.dp,
-        vertical = 4.dp
-    ),
-    shape = RoundedCornerShape(12.dp),
-    colors = ButtonDefaults.buttonColors(
-        containerColor = Color.White,
-        contentColor = Color(0xFF702FC5),
-        disabledContainerColor = Color(0xFFF5F2F8),
-        disabledContentColor = Color(0xFF9B83B8)
-    ),
-    elevation = ButtonDefaults.buttonElevation(
-        defaultElevation = 3.dp,
-        pressedElevation = 1.dp,
-        disabledElevation = 0.dp
-    )
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "Morning",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            "Rs. ${"%.0f".format(Locale.US, trip?.morningFare ?: selectedChild.morningFare)}",
-            style = MaterialTheme.typography.labelSmall
-        )
-    }
-}
+                            Button(
+                                onClick = {
+                                    toggleAttendance(item.date, true)
+                                },
+                                enabled = !rowPending,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(52.dp),
+                                contentPadding = PaddingValues(
+                                    horizontal = 2.dp,
+                                    vertical = 4.dp
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color(0xFF702FC5),
+                                    disabledContainerColor = Color(0xFFF5F2F8),
+                                    disabledContentColor = Color(0xFF9B83B8)
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = 3.dp,
+                                    pressedElevation = 1.dp,
+                                    disabledElevation = 0.dp
+                                )
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "Morning",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        "Rs. ${"%.0f".format(Locale.US, trip?.morningFare ?: selectedChild.morningFare)}",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
 
-Button(
-    onClick = {
-        toggleAttendance(item.date, false)
-    },
-    enabled = !rowPending,
-    modifier = Modifier
-        .weight(1f)
-        .height(52.dp),
-    contentPadding = PaddingValues(
-        horizontal = 2.dp,
-        vertical = 4.dp
-    ),
-    shape = RoundedCornerShape(12.dp),
-    colors = ButtonDefaults.buttonColors(
-        containerColor = Color.White,
-        contentColor = Color(0xFF702FC5),
-        disabledContainerColor = Color(0xFFF5F2F8),
-        disabledContentColor = Color(0xFF9B83B8)
-    ),
-    elevation = ButtonDefaults.buttonElevation(
-        defaultElevation = 3.dp,
-        pressedElevation = 1.dp,
-        disabledElevation = 0.dp
-    )
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "Return",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            "Rs. ${"%.0f".format(Locale.US, trip?.returnFare ?: selectedChild.returnFare)}",
-            style = MaterialTheme.typography.labelSmall
-        )
-    }
-}
+                            Button(
+                                onClick = {
+                                    toggleAttendance(item.date, false)
+                                },
+                                enabled = !rowPending,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(52.dp),
+                                contentPadding = PaddingValues(
+                                    horizontal = 2.dp,
+                                    vertical = 4.dp
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color(0xFF702FC5),
+                                    disabledContainerColor = Color(0xFFF5F2F8),
+                                    disabledContentColor = Color(0xFF9B83B8)
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = 3.dp,
+                                    pressedElevation = 1.dp,
+                                    disabledElevation = 0.dp
+                                )
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "Return",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        "Rs. ${"%.0f".format(Locale.US, trip?.returnFare ?: selectedChild.returnFare)}",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
 
+                            Column(
+                                modifier = Modifier.weight(0.9f),
+                                horizontalAlignment = Alignment.End
+                            ) {
+                                Text(
+                                    "Total",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Text(
+                                    text = "Rs. ${"%.0f".format(Locale.US, dailyTotal)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -628,3 +643,4 @@ private fun TripCountCard(
         }
     }
 }
+4
